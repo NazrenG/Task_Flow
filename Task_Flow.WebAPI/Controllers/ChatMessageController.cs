@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Newtonsoft.Json.Linq;
 using System.Security.Claims;
 using Task_Flow.Business.Abstract;
+using Task_Flow.Business.Cocrete;
 using Task_Flow.DataAccess.Abstract;
 using Task_Flow.DataAccess.Concrete;
 using Task_Flow.Entities.Models;
@@ -22,14 +24,16 @@ namespace Task_Flow.WebAPI.Controllers
         private readonly IChatMessageService _chatMessageService;
         private readonly IUserService _userService;
         private readonly UserManager<CustomUser> _userManager;
+        private readonly MessageEncryptionService encryptionService;
 
-        public ChatMessageController(IHubContext<ConnectionHub> hub, IChatService chatService, IChatMessageService chatMessageService, IUserService userService, UserManager<CustomUser> userManager)
+        public ChatMessageController(MessageEncryptionService encryptionService, IHubContext<ConnectionHub> hub, IChatService chatService, IChatMessageService chatMessageService, IUserService userService, UserManager<CustomUser> userManager)
         {
             _hub = hub;
             _chatService = chatService;
             _chatMessageService = chatMessageService;
             _userService = userService;
             _userManager = userManager;
+            this.encryptionService = encryptionService;
         }
 
         [Authorize]
@@ -38,7 +42,7 @@ namespace Task_Flow.WebAPI.Controllers
         {
 
             var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
+            var encrypted = encryptionService.Encrypt(dto.Text);
             if (string.IsNullOrEmpty(userId))
             {
                 return Unauthorized("Invalid token or user not found.");
@@ -51,7 +55,7 @@ namespace Task_Flow.WebAPI.Controllers
             //    messageList = await _chatMessageService.GetAllByChatId(chat.Id);
             //}
 
-            var message = new ChatMessage { Content = dto.Text, SenderId = userId, SentDate = DateTime.UtcNow, ChatId = chat.Id ,IsImage=dto.IsImage};
+            var message = new ChatMessage { Content = encrypted.CipherText, IV = encrypted.IV, SenderId = userId, SentDate = DateTime.UtcNow, ChatId = chat.Id ,IsImage=dto.IsImage};
 
             await _chatMessageService.AddAsync(message);
             await _hub.Clients.User(userId).SendAsync("ReceiveMessages2",friend.Email);
@@ -103,17 +107,37 @@ namespace Task_Flow.WebAPI.Controllers
             if (chat == null) { chat = new Chat { SenderId = userId, ReceiverId = friend.Id, Messages = new List<ChatMessage>() }; await _chatService.AddAsync(chat); }
             var allMessages = await _chatMessageService.GetAllByChatId(chat.Id);
             var dtoList = new List<UserMessageDto>();
+            string decryptedMessage = "";
+
+
             foreach (var message in allMessages)
             {
                 var sender = await _userService.GetUserById(message.SenderId);
+                if (message.Status == "Deleted")
+    {
+        decryptedMessage = "This message was deleted!";
+    }
+    else if (!string.IsNullOrEmpty(message.IV))
+    {
+        // encrypted message
+        decryptedMessage = encryptionService.Decrypt(
+            message.Content,
+            message.IV
+        );
+    }
+    else
+    {
+        // old messages (before encryption)
+        decryptedMessage = message.Content;
+    }
                 dtoList.Add(new UserMessageDto
                 {
                     IsOnline = sender.IsOnline,
                     IsSender = sender.Id == userId,
                     Fullname = sender.Firstname + " " + sender.Lastname,
-                    Message = message.Content,
+                    Message = decryptedMessage,
                     Photo = sender.Image,
-                   Status=message.Status,
+                    Status=message.Status,
                     SentDate = message.SentDate,
                     MessageId = message.Id,
                 });
@@ -142,7 +166,6 @@ namespace Task_Flow.WebAPI.Controllers
 
             // };
             message.Status = "Deleted";
-            message.Content = "";
             await _chatMessageService.UpdateAsync(message);
             return Ok();
         

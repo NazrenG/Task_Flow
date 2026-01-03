@@ -212,5 +212,11 @@ namespace Task_Flow.WebAPI.Controllers
             return Ok(user);
         }
 
+        [HttpGet("test")]
+        public IActionResult test()
+        {
+            return Ok("helloo!");
+        }
+
     }
 }

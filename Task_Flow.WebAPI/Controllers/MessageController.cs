@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Task_Flow.Business.Abstract;
+using Task_Flow.Business.Cocrete;
 using Task_Flow.DataAccess.Abstract;
 using Task_Flow.Entities.Models;
 using Task_Flow.WebAPI.Dtos;
@@ -16,7 +17,6 @@ namespace Task_Flow.WebAPI.Controllers
         private readonly IUserService userService;
         private readonly IChatService chatService;
         private readonly IChatMessageService chatMessageService;
-
         public MessageController(IMessageService messageService, IChatService chatService, IChatMessageService chatMessageService, IUserService userService)
         {
             this.messageService = messageService;
@@ -124,11 +124,13 @@ namespace Task_Flow.WebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] MessageDto value)
         {
+          
             var item = new Message
             {
                 ReceiverId = value.ReceiverId,
                 SenderId = value.SenderId,
                 Text = value.Text,
+               
                 SentDate = DateTime.Now,
             };
             await messageService.Add(item);

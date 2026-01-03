@@ -41,6 +41,7 @@ builder.Services.AddDbContext<TaskFlowDbContext>(opt =>
 builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
     .AddJsonFile("SMTP.json", optional: false, reloadOnChange: true);
 
+
 builder.Services.AddTransient<MailService>();
 builder.Services.AddHostedService<ReminderService>();
 
@@ -79,6 +80,8 @@ builder.Services.AddScoped<IChatDal, ChatDal>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IChatMessageDal,ChatMessageDal>();
 builder.Services.AddScoped<IChatMessageService, ChatMessageService>();
+builder.Services.AddSingleton<MessageEncryptionService>();
+
 
 // Identity configuration (only user management, no roles)
 builder.Services.AddIdentity<CustomUser, IdentityRole>()

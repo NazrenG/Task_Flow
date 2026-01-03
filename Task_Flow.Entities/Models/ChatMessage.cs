@@ -14,6 +14,8 @@ namespace Task_Flow.Entities.Models
         public bool IsImage { get; set; }
         public DateTime SentDate { get; set; }
         public int ChatId { get; set; }
+        public string? IV { get; set; }
+
         public virtual Chat? Chat { get; set; }
         public bool HasSeen { get; set; }
         public string? SenderId { get; set; }

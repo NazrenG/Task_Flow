@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Security.Claims;
 using Task_Flow.Business.Abstract;
+using Task_Flow.Business.Cocrete;
 using Task_Flow.DataAccess.Abstract;
 using Task_Flow.Entities.Models;
 using Task_Flow.WebAPI.Dtos;
@@ -22,14 +23,16 @@ namespace Task_Flow.WebAPI.Controllers
         private readonly IChatMessageService chatMessageService;
         private readonly IChatService chatService;
         private readonly IHubContext<ConnectionHub> hubContext;
+        private readonly MessageEncryptionService encryptionService;
 
-        public ChatController(IUserService userService, IFriendService friendService, IHubContext<ConnectionHub> hubContext, IChatService chatService, IChatMessageService chatMessageService)
+        public ChatController(MessageEncryptionService encryptionService, IUserService userService, IFriendService friendService, IHubContext<ConnectionHub> hubContext, IChatService chatService, IChatMessageService chatMessageService)
         {
             this.userService = userService;
             this.friendService = friendService;
             this.hubContext = hubContext;
             this.chatService = chatService;
             this.chatMessageService = chatMessageService;
+            this.encryptionService = encryptionService;
         }
 
         [Authorize]
@@ -52,7 +55,7 @@ namespace Task_Flow.WebAPI.Controllers
             }
 
             var sorted = new List<FriendForMessageDto>();
-
+            
 
             foreach (var item in sortFriend)
             {
@@ -65,13 +68,29 @@ namespace Task_Flow.WebAPI.Controllers
                     isReciever =latestmessage!=null? latestmessage.SenderId !=userId:false;
                 }
                 var user = await userService.GetUserById(item.UserFriendId);
+               string encrypted = "";
+                if (latestmessage.Status == "Deleted")
+                {
+                    encrypted = "This message was deleted!";
+                }
+                else if (!string.IsNullOrEmpty(latestmessage.IV))
+                {
+                    encrypted = encryptionService.Decrypt(
+                        latestmessage.Content,
+                        latestmessage.IV
+                    );
+                }
+                else
+                {
+                    encrypted =latestmessage.Content;
+                }
                 sorted.Add(new FriendForMessageDto
                 {
                     FriendFullname = user.Firstname + " " + user.Lastname,
                     FriendEmail = user.Email,
                     FriendImg = user.Image,
                     isReciever = isReciever,
-                    RecentMessage = (latestmessage==null?"":latestmessage.Content),
+                    RecentMessage = (latestmessage==null?"": encrypted),
                     IsOnline=user.IsOnline
                 });
 
