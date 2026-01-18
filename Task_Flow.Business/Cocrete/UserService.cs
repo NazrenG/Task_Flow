@@ -73,7 +73,8 @@ namespace Task_Flow.Business.Cocrete
 
         }
 
-   
-       
+        //public async Task<string> GetProfilePhotoAsync(string id)
+        //{return (await dal.GetById(u=>u.Id==id)).Image;
+        //}
     }
 }

@@ -112,6 +112,33 @@ namespace Task_Flow.WebAPI.Controllers
                 });
             }
             return Ok(result);
+        } 
+        
+        [Authorize]
+        [HttpGet("AllFriendsForGroupChat")]
+        public async Task<IActionResult> GetFriends()
+        {
+
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+            {
+                return BadRequest(new { message = "User not authenticated." });
+            }
+
+            var list = await friendService.GetFriends(userId);
+            var result = new List<GroupChatFriendPOSTDto>();
+
+            foreach (var p in list)
+            {
+                var check = await friendService.CheckFriendship(p.UserId, p.UserFriendId);
+                result.Add(new GroupChatFriendPOSTDto
+                {
+                   Fullname= p.UserFriend.Firstname + " " + p.UserFriend.Lastname,
+                   Id=p.UserFriendId,
+                   
+                });
+            }
+            return Ok(result);
         }
 
 

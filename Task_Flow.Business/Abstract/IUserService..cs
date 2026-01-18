@@ -13,5 +13,8 @@ namespace Task_Flow.DataAccess.Abstract
         Task<int> GetAllUserCount();
         Task<CustomUser> GetOneUSerByUsername(string username);
         Task<bool> CheckUsernameOrEmail(string nameOrEmail);
+        //Task<string> GetProfilePhotoAsync(string id);
+
+    
     }
 }

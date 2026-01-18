@@ -105,6 +105,15 @@ namespace Task_Flow.WebAPI.Hubs
         {
             await Clients.User(id).SendAsync("UpdateProfileRequestList");
         }
+        public async Task JoinGroup(int groupId)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"group-{groupId}");
+        }
+        public async Task LeaveGroup(int groupId)
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"group-{groupId}");
+        }
+
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
             var user = await _userManager.GetUserAsync(Context.User);

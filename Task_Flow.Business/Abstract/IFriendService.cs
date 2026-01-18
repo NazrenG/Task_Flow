@@ -11,5 +11,6 @@ namespace Task_Flow.Business.Abstract
         Task Delete(Friend friend);
         Task<bool>CheckFriendship(string userId, string friendId);
         Task<bool> MutualFriends(string userId, string friendId);
+        Task<List<string>> GetAllFriendsIdsAsync(string userId);
     }
 }

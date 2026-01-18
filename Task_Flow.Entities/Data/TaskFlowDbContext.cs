@@ -35,18 +35,18 @@ namespace Task_Flow.Entities.Data
                 .WithMany(u => u.RequestNotificationsReceiver)
                 .HasForeignKey(m => m.ReceiverId)
                 .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<RequestNotification>()
-         .HasOne(m => m.Sender)
-         .WithMany(u => u.RequestNotificationsSender)
-         .HasForeignKey(m => m.SenderId)
-         .OnDelete(DeleteBehavior.Restrict);
+                .HasOne(m => m.Sender)
+                .WithMany(u => u.RequestNotificationsSender)
+                .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Message>()
                 .HasOne(m => m.Receiver)
                 .WithMany(u => u.MessagesReceiver)
                 .HasForeignKey(m => m.ReceiverId)
                 .OnDelete(DeleteBehavior.Restrict);
-
 
             modelBuilder.Entity<Work>()
                 .HasOne(t => t.CreatedBy)
@@ -77,13 +77,56 @@ namespace Task_Flow.Entities.Data
                 .WithMany(p => p.TeamMembers)
                 .HasForeignKey(tm => tm.ProjectId)
                 .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<RecentActivity>()
-       .HasOne(ra => ra.User)
-       .WithMany(u => u.RecentActivities)
-       .HasForeignKey(ra => ra.UserId)
-       .OnDelete(DeleteBehavior.Cascade);
+                .HasOne(ra => ra.User)
+                .WithMany(u => u.RecentActivities)
+                .HasForeignKey(ra => ra.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<GroupChatMembers>().HasOne(gcm => gcm.GroupChat).WithMany(g => g.Members).HasForeignKey(k => k.GroupId).OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<GroupChatMessage>().HasOne(c => c.GroupChat).WithMany(c=>c.Messages).HasForeignKey(k=>k.GroupChatId).OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<GroupChatMembers>()
+                .HasOne(gcm => gcm.CustomUser)
+                .WithMany()
+                .HasForeignKey(gcm => gcm.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<GroupChat>(entity =>
+            {
+                entity.HasKey(g => g.Id);
+
+                entity.Property(g => g.Name)
+                      .IsRequired()
+                      .HasMaxLength(200);
+
+                entity.Property(g => g.IsDeleted)
+                      .HasDefaultValue(false);
+
+                entity.HasMany(g => g.Members)
+                      .WithOne(m => m.GroupChat)
+                      .HasForeignKey(m => m.GroupId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasMany(g => g.Messages)
+                      .WithOne(m => m.GroupChat)
+                      .HasForeignKey(m => m.GroupChatId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<GroupChatMembers>(entity =>
+            {
+                entity.HasOne(gcm => gcm.CustomUser)
+                      .WithMany()
+                      .HasForeignKey(gcm => gcm.UserId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+
+
+
             base.OnModelCreating(modelBuilder);
         }
+        
 
         public virtual DbSet<Comment> Comments { get; set; }
         public virtual DbSet<Quiz> Quizzes { get; set; }
@@ -102,6 +145,11 @@ namespace Task_Flow.Entities.Data
         public virtual DbSet<RecentActivity> RecentActivities { get; set; }
         public virtual DbSet<ProjectActivity>ProjectActivities { get; set; }
         public virtual DbSet<UserTask> UserTasks { get; set; }
+        public virtual DbSet<GroupChat> GroupChats { get; set; }
+        public virtual DbSet<GroupChatMessage> GroupChatMessages { get; set; }
+        public  virtual DbSet<GroupChatMembers> GroupChatMembers { get; set; }
+
+
 
     }
 }

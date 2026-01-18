@@ -80,6 +80,10 @@ builder.Services.AddScoped<IChatDal, ChatDal>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IChatMessageDal,ChatMessageDal>();
 builder.Services.AddScoped<IChatMessageService, ChatMessageService>();
+builder.Services.AddScoped<IGroupChatDal, GroupChatDal>();
+builder.Services.AddScoped<IGroupChatMessageDal , GroupChatMessageDal>();   
+builder.Services.AddScoped<IGroupChatMembersDal , GroupChatMembersDal>();
+builder.Services.AddScoped<IGroupChatService, GroupChatService>();
 builder.Services.AddSingleton<MessageEncryptionService>();
 
 

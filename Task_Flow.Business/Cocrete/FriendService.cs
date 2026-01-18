@@ -61,5 +61,20 @@ namespace Task_Flow.Business.Cocrete
 
             return count == 2;
         }
+
+        public async Task<List<string>> GetAllFriendsIdsAsync(string userId)
+        {
+            var friends = await dal.GetAll(f =>
+      f.IsFriend &&
+      !f.HasRequestPending &&
+      (f.UserId == userId || f.UserFriendId == userId)
+  );
+
+            return friends
+                .Select(f => f.UserId == userId ? f.UserFriendId : f.UserId)
+                .Where(id => !string.IsNullOrEmpty(id))
+                .Distinct()
+                .ToList();
+        }
     }
 }
