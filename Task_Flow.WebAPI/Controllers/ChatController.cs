@@ -62,27 +62,31 @@ namespace Task_Flow.WebAPI.Controllers
                 var chat = await chatService.GetByRecieverAndSenderId(userId, item.UserFriendId);
                 ChatMessage latestmessage = null;
                 bool isReciever = false;
+               string encrypted = "";
+                var user = await userService.GetUserById(item.UserFriendId);
                 if (chat != null)
                 {
                     latestmessage = await chatMessageService.GetLatestMessageByChatIdAsync(chat.Id);
                     isReciever =latestmessage!=null? latestmessage.SenderId !=userId:false;
+               
                 }
-                var user = await userService.GetUserById(item.UserFriendId);
-               string encrypted = "";
-                if (latestmessage.Status == "Deleted")
+                if (latestmessage != null)
                 {
-                    encrypted = "This message was deleted!";
-                }
-                else if (!string.IsNullOrEmpty(latestmessage.IV))
-                {
-                    encrypted = encryptionService.Decrypt(
-                        latestmessage.Content,
-                        latestmessage.IV
-                    );
-                }
-                else
-                {
-                    encrypted =latestmessage.Content;
+                    if (latestmessage.Status == "Deleted")
+                    {
+                        encrypted = "This message was deleted!";
+                    }
+                    else if (!string.IsNullOrEmpty(latestmessage.IV))
+                    {
+                        encrypted = encryptionService.Decrypt(
+                            latestmessage.Content,
+                            latestmessage.IV
+                        );
+                    }
+                    else
+                    {
+                        encrypted = latestmessage.Content;
+                    }
                 }
                 sorted.Add(new FriendForMessageDto
                 {
