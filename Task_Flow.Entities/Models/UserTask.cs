@@ -22,7 +22,7 @@ namespace Task_Flow.Entities.Models
 
         public string? Color { get; set; }
         public string? CreatedById { get; set; }//userId
-
+        public bool IsDeleted { get; set; } = false;
         public virtual CustomUser? CreatedBy { get; set; }
     }
 }

@@ -20,5 +20,9 @@
         public string? ParticipantName{ get; set; }
         public string? ParticipantEmail { get; set; }
         public string? CreatedById { get; set; }//userId
+        public int? CanbanColumnId { get; set; }
+        public int? SprintId { get; set; }
+        public string? ParticipantId { get; set; }
+
     }
 }

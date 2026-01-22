@@ -17,10 +17,14 @@ namespace Task_Flow.Entities.Models
         
         public string? Color { get; set; }
         public int ProjectId { get; set; }
-
+        public int? SprintId { get; set; }
+        public int? CanbanColumnId { get; set; }
         public string? CreatedById { get; set; }//adi sehvdi UserId olmalidi -taski isleyen userId
+                                                //
+        public bool IsDeleted { get; set; } = false;
         //
-         
+        public virtual Sprint? Sprint { get; set; }
+        public virtual CanbanColumn? CanbanColumn { get; set; }
         public virtual CustomUser? CreatedBy { get; set; }
         public virtual Project? Project { get; set; } 
         public virtual List<Comment>? Comments { get; set; } 

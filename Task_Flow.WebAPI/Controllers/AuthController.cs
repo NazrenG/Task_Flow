@@ -67,7 +67,7 @@ namespace Task_Flow.WebAPI.Controllers
             var result = await _userManager.CreateAsync(user, dto.Password);
             if (result.Succeeded)
             {
-                await _quizService.Add(new Quiz());
+               // await _quizService.Add(new Quiz());
                 //await _context.Clients.All.SendAsync("ClientCountUpdate");
                 return Ok(new { Status = "Success", Message = "User created successfully!" });
             }

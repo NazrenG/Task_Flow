@@ -9,6 +9,7 @@ using System.Globalization;
 using System.Security.Claims;
 using Task_Flow.Business.Abstract;
 using Task_Flow.Business.Cocrete;
+using Task_Flow.Business.DTOs;
 using Task_Flow.DataAccess.Abstract;
 using Task_Flow.Entities.Data;
 using Task_Flow.Entities.Models;
@@ -30,8 +31,10 @@ namespace Task_Flow.WebAPI.Controllers
         private readonly IHubContext<ConnectionHub> _hub;
         private readonly IRequestNotificationService _requestNotificationService;
         private readonly Business.Cocrete.MailService mailService;
+        private readonly ICanbanColumnService canbanColumnService;
 
-        public ProjectController(IProjectService projectService, TaskFlowDbContext context, IUserService userService, ITaskService taskService, ITeamMemberService teamMemberService, IProjectActivityService projectActivity, IHubContext<ConnectionHub> hub, IRequestNotificationService requestNotificationService, Business.Cocrete.MailService mailService)
+
+        public ProjectController(IProjectService projectService, TaskFlowDbContext context, IUserService userService, ITaskService taskService, ITeamMemberService teamMemberService, IProjectActivityService projectActivity, IHubContext<ConnectionHub> hub, IRequestNotificationService requestNotificationService, Business.Cocrete.MailService mailService, ICanbanColumnService canbanColumnService)
         {
             _projectService = projectService;
             _context = context;
@@ -42,14 +45,15 @@ namespace Task_Flow.WebAPI.Controllers
             _hub = hub;
             _requestNotificationService = requestNotificationService;
             this.mailService = mailService;
+            this.canbanColumnService = canbanColumnService;
         }
 
         [HttpGet("ProjectTitle/{projectId}")]
         public async Task<IActionResult> GetProjectTitle(int projectId)
         {
-            var project=await _projectService.GetProjectById(projectId);
-            if(project==null) return NotFound();
-            return Ok(new { Title = project.Title ,Color=project.Color});
+            var project = await _projectService.GetProjectById(projectId);
+            if (project == null) return NotFound();
+            return Ok(new { Title = project.Title, Color = project.Color });
         }
 
 
@@ -77,7 +81,7 @@ namespace Task_Flow.WebAPI.Controllers
                 EndDate = p.EndDate,
                 StartDate = p.StartDate,
                 Title = p.Title,
-                Deadline=p.EndDate,
+                Deadline = p.EndDate,
                 TotalTask = p.TaskForUsers.Count,
                 CompletedTask = p.TaskForUsers.Count(t => t.Status == "done"),
                 ParticipantsPath = p.TeamMembers!
@@ -151,20 +155,20 @@ namespace Task_Flow.WebAPI.Controllers
             var project = new ProjectDto
             {
                 Owner = item.CreatedBy?.UserName,
-                OwnerMail=item.CreatedBy?.Email,    
+                OwnerMail = item.CreatedBy?.Email,
                 IsCompleted = item.IsCompleted,
                 Description = item.Description,
                 Title = item.Title,
                 Color = item.Color,
                 StartDate = item.StartDate,
                 EndDate = item.EndDate,
-                Status = item.Status,  
-               
+                Status = item.Status,
+
             };
 
             var teamMembers = await _teamMemberService.GetTaskMemberListById(id);
             var memberUsernames = new List<string>();
-            var membersPath=new List<string>(); 
+            var membersPath = new List<string>();
 
             foreach (var teamMember in teamMembers)
             {
@@ -172,12 +176,12 @@ namespace Task_Flow.WebAPI.Controllers
                 if (user != null)
                 {
                     memberUsernames.Add(user.UserName);
-                    membersPath.Add(user.Image); 
+                    membersPath.Add(user.Image);
                 }
             }
 
             project.Members = memberUsernames;
-           project.MembersPath = membersPath;
+            project.MembersPath = membersPath;
 
             return Ok(project);
         }
@@ -196,7 +200,7 @@ namespace Task_Flow.WebAPI.Controllers
                 return NotFound();
             }
             var projectTasks = await _taskService.GetByProjectId(projectId);
-             
+
             var items = projectTasks.Select(p =>
             {
                 return new CanbanTaskDto
@@ -209,10 +213,11 @@ namespace Task_Flow.WebAPI.Controllers
                     Status = p.Status,
                     Title = p.Title,
                     StartDate = p.StartTime,
-                    Color = p.Color,  
-                 
-
-                    ParticipantPath = p.CreatedBy?.Image ?? "default-path.png",  
+                    Color = p.Color,
+                    CanbanColumnId = p.CanbanColumnId,
+                    SprintId = p.SprintId,
+                    ParticipantId = p.CreatedById,
+                    ParticipantPath = p.CreatedBy?.Image ?? "default-path.png",
                     ParticipantName = p.CreatedBy != null
             ? $"{p.CreatedBy.Firstname} {p.CreatedBy.Lastname}"
             : "Unknown Participant",
@@ -225,87 +230,63 @@ namespace Task_Flow.WebAPI.Controllers
         }
         //canbanda tasklarin statusunu deyisdirmek 
         [Authorize]
-        [HttpPut("UpdateTaskStatus/{id}")]
-        public async Task<IActionResult> UpdateTaskStatus(int id, [FromBody] UpdateTaskStatusDto updateTaskStatusDto)
+        [HttpPut("UpdateTaskColumn")]
+        public async Task<IActionResult> UpdateTaskColumn(
+     [FromBody] UpdateTaskColumnDto dto)
         {
             var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var task = await _taskService.GetTaskById(id);
-            
+
+            var task = await _taskService.GetTaskById(dto.TaskId);
             if (task == null)
                 return NotFound("Task not found.");
 
             var project = await _projectService.GetProjectById(task.ProjectId);
-
-            //proyekt sahibi deyise bilsin
             if (project.CreatedById != userId)
                 return BadRequest("You do not have permission to update tasks in this project.");
 
-            task.Status = updateTaskStatusDto.NewStatus;
+            task.CanbanColumnId = dto.NewCanbanColumnId;
+
             await _taskService.Update(task);
 
-
             try
-            {        //userin task listi ucun kanbandan gelen task  
+            {
                 await _hub.Clients.User(task.CreatedById).SendAsync("UserTaskList");
                 await _hub.Clients.User(task.CreatedById).SendAsync("RunningTaskCount");
                 await _hub.Clients.User(task.CreatedById).SendAsync("CompletedTaskCount");
                 await _hub.Clients.User(task.CreatedById).SendAsync("OnHoldTaskCount");
-                await _hub.Clients.User(task.CreatedById).SendAsync("TaskTotalCount");//task siline biler
+                await _hub.Clients.User(task.CreatedById).SendAsync("TaskTotalCount");
 
-                //canban ucun signalr 
                 await _hub.Clients.User(userId).SendAsync("CanbanTaskUpdated");
                 await _hub.Clients.User(task.CreatedById).SendAsync("CanbanTaskUpdated");
+
                 await _hub.Clients.User(task.CreatedById).SendAsync("DashboardCalendarNotificationCount");
-                //dashboard-da current project
                 await _hub.Clients.User(task.CreatedById).SendAsync("DashboardReceiveProject");
-            
 
-                //project ve view detail sehifesindeki task list
-    await _hub.Clients.User(task.CreatedById).SendAsync("ProjectsTaskList");
-    await _hub.Clients.User(task.CreatedById).SendAsync("ProjectDetailTaskList");
+                await _hub.Clients.User(task.CreatedById).SendAsync("ProjectsTaskList");
+                await _hub.Clients.User(task.CreatedById).SendAsync("ProjectDetailTaskList");
+                await _hub.Clients.User(task.CreatedById).SendAsync("UserProfileTask");
 
-                //view profil sehifesindeki task list 
-    await _hub.Clients.User(task.CreatedById).SendAsync("UserProfileTask");
-                //project activity log signalr detail sehifesi
                 await _hub.Clients.User(task.CreatedById).SendAsync("ProjectRecentActivityInDetail");
                 await _hub.Clients.User(userId).SendAsync("ProjectRecentActivityInDetail");
-                //project activity log signalr project sehifesi
+
                 await _hub.Clients.User(task.CreatedById).SendAsync("ProjectsRecentActivity");
                 await _hub.Clients.User(userId).SendAsync("ProjectsRecentActivity");
-                // request getsin taski edit olan sexse
-                var request = new RequestNotification
-                {
-                    IsAccepted = false,
-                    ReceiverId = task.CreatedById,
-                    SenderId = userId,
-                    NotificationType = "ProjectRequest",
-                    ProjectName = project.Title,
-                    SentDate = DateTime.UtcNow,
-                    Text = $"Your task edit by {project.CreatedBy?.Firstname} {project.CreatedBy?.Lastname} in the project named {project.Title} "
-                };
-                await _requestNotificationService.Add(request);
-                await _hub.Clients.User(task.CreatedById).SendAsync("RequestList2");
-                await _hub.Clients.User(task.CreatedById).SendAsync("RequestCount");
-                await _hub.Clients.User(task.CreatedById).SendAsync("RequestList");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"SignalR error: {ex.Message}");
-
             }
-            //mail getsin taski edit olan sexse
-            mailService.SendEmail(task.CreatedBy?.Email, $"Your task edit in the project named {project} ");
-
 
             await _projectActivity.Add(new ProjectActivity
             {
                 UserId = userId,
                 ProjectId = task.ProjectId,
-                Text = $"The task named '{task.Title}' has been successfully updated for {task.CreatedBy?.Firstname} {task.CreatedBy?.Lastname}.",
+                Text = $"Task '{task.Title}' moved to another column.",
             });
 
-            return Ok("Task status updated successfully.");
+            return Ok("Task column updated successfully.");
         }
+
 
         [Authorize]
         [HttpGet("AllProjectsUserOwn")]
@@ -351,6 +332,47 @@ namespace Task_Flow.WebAPI.Controllers
 
         }
 
+        private async Task CreateDefaultKanbanColumns(int projectId)
+        {
+            var columns = new[]
+            {
+        new { Name = "To Do", StatusKey = "to do" },
+        new { Name = "Progress", StatusKey = "progress" },
+        new { Name = "Done", StatusKey = "done" }
+    };
+
+            int order = 1;
+            foreach (var col in columns)
+            {
+                await canbanColumnService.CreateDefaultCanbanName(
+                    new CreateDefaultCanbanNameDto
+                    {
+                        ProjectId = projectId,
+                        Name = col.Name,
+                        Order = order++,
+                        StatusKey = col.StatusKey
+                    });
+            }
+        }
+
+        private async Task NotifyUser(string userId, string status)
+        {
+            await _hub.Clients.User(userId).SendAsync("ReceiveProjectUpdate");
+            await _hub.Clients.User(userId).SendAsync("RecieveInProgressUpdate");
+            await _hub.Clients.User(userId).SendAsync("UpdateTotalProjects");
+
+            var statusEventMap = new Dictionary<string, string>
+            {
+                ["On Going"] = "UpdateOnGoingProjects",
+                ["Pending"] = "UpdatePendingProjects",
+                ["Completed"] = "UpdateCompletedProjects"
+            };
+
+            if (statusEventMap.TryGetValue(status, out var eventName))
+                await _hub.Clients.User(userId).SendAsync(eventName);
+        }
+
+
         // POST api/<ProjectController>
         [Authorize]///Sevgi
         [HttpPost]///Sevgi
@@ -372,20 +394,25 @@ namespace Task_Flow.WebAPI.Controllers
                 Color = value.Color,
             };
             await _projectService.Add(item);
-
+            //default canban name
+            await CreateDefaultKanbanColumns(item.Id);
 
             await _projectActivity.Add(new ProjectActivity { UserId = userId, ProjectId = item.Id, Text = "created a new Project named: " + item.Title });
-            //var count=await _projectService.
-            //await _hub.Clients.All.SendAsync("ProjectCountUpdate");
-            await _hub.Clients.User(userId).SendAsync("ReceiveProjectUpdate");
-            await _hub.Clients.User(userId).SendAsync("RecieveInProgressUpdate");
-            await _hub.Clients.User(userId).SendAsync("UpdateTotalProjects");//s
-            if (value.Status == "On Going")
-                await _hub.Clients.User(userId).SendAsync("UpdateOnGoingProjects");
-            else if (value.Status == "Pending")
-                await _hub.Clients.User(userId).SendAsync("UpdatePendingProjects");
-            else if (value.Status == "Completed")
-                await _hub.Clients.User(userId).SendAsync("UpdateCompletedProjects");
+
+            await NotifyUser(userId, value.Status);
+
+
+            ////var count=await _projectService.
+            ////await _hub.Clients.All.SendAsync("ProjectCountUpdate");
+            //await _hub.Clients.User(userId).SendAsync("ReceiveProjectUpdate");
+            //await _hub.Clients.User(userId).SendAsync("RecieveInProgressUpdate");
+            //await _hub.Clients.User(userId).SendAsync("UpdateTotalProjects");//s
+            //if (value.Status == "On Going")
+            //    await _hub.Clients.User(userId).SendAsync("UpdateOnGoingProjects");
+            //else if (value.Status == "Pending")
+            //    await _hub.Clients.User(userId).SendAsync("UpdatePendingProjects");
+            //else if (value.Status == "Completed")
+            //    await _hub.Clients.User(userId).SendAsync("UpdateCompletedProjects");
             return Ok(item);
         }
 
@@ -408,10 +435,10 @@ namespace Task_Flow.WebAPI.Controllers
             await _projectActivity.Add(new ProjectActivity { UserId = userId, ProjectId = id, Text = "Changed Project Title to: " + item.Title });
             await _hub.Clients.User(userId).SendAsync("ReceiveProjectUpdate");
             await _hub.Clients.User(userId).SendAsync("RecieveInProgressUpdate");
-           
-    
-        await _hub.Clients.All.SendAsync("ReceiveProjectUpdateDashboard");
-    
+
+
+            await _hub.Clients.All.SendAsync("ReceiveProjectUpdateDashboard");
+
             return Ok();
 
         }
@@ -495,7 +522,7 @@ namespace Task_Flow.WebAPI.Controllers
             {
                 return Unauthorized("Invalid token or user not found.");
             }
-           
+
             var projects = await _projectService.GetOnGoingProject(userId);
             var list = projects.Select(p => new
             {
@@ -504,7 +531,7 @@ namespace Task_Flow.WebAPI.Controllers
                 StartDate = p.StartDate,
                 MembersPath = p.TeamMembers!.Select(tm => tm.User?.Image)!
                         .ToList(),
-                        Color= p.Color, 
+                Color = p.Color,
             });
             return Ok(list);
 

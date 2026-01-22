@@ -12,6 +12,7 @@ using Task_Flow.DataAccess.Concrete;
 using Task_Flow.Entities.Models;
 using Task_Flow.WebAPI.Dtos;
 using Task_Flow.WebAPI.Hubs;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Task_Flow.WebAPI.Controllers
 {
@@ -27,9 +28,10 @@ namespace Task_Flow.WebAPI.Controllers
         private readonly SignInManager<CustomUser> _signInManager;
         private static readonly Dictionary<string, int> _verificationCodes = new();
         private readonly IFileService _fileService;
+        private readonly IRecentActivityService recentActivityService;
 
         public ProfileController(UserManager<CustomUser> userManager, IConfiguration configuration, IHubContext<ConnectionHub> hubContext,
-            IUserService userService, SignInManager<CustomUser> signInManager, MailService emailService, IFileService fileService)
+            IUserService userService, SignInManager<CustomUser> signInManager, MailService emailService, IFileService fileService, IRecentActivityService recentActivityService)
         {
             _userManager = userManager;
             _configuration = configuration;
@@ -38,6 +40,7 @@ namespace Task_Flow.WebAPI.Controllers
             _signInManager = signInManager;
             _emailService = emailService;
             _fileService = fileService;
+            this.recentActivityService = recentActivityService;
         }
 
         [HttpGet("{email}")]
@@ -192,7 +195,7 @@ namespace Task_Flow.WebAPI.Controllers
 
             user.IsOnline = false;
             await _userService.Update(user);
-        
+
             await _signInManager.SignOutAsync();
             await _hubContext.Clients.All.SendAsync("UpdateUserActivity");
 
@@ -234,6 +237,13 @@ namespace Task_Flow.WebAPI.Controllers
 
             await _userService.Update(user);
             await _hubContext.Clients.User(userId).SendAsync("ProfileUpdated");
+            var item = new RecentActivity
+            {
+                UserId = userId,
+                Text = "Profile updated succesfullly",
+                Type = "Profile",
+            };
+            await recentActivityService.Add(item);
             await _hubContext.Clients.User(userId).SendAsync("RecentActivityUpdate1");
 
             return Ok(new { message = "Edit successful" });
@@ -266,25 +276,44 @@ namespace Task_Flow.WebAPI.Controllers
             }
 
             await _userService.Update(user);
-            await _hubContext.Clients.User(userId).SendAsync("ProfileUpdated"); 
+            await _hubContext.Clients.User(userId).SendAsync("ProfileUpdated");
+            var item = new RecentActivity
+            {
+                UserId = userId,
+                Text = "Profile image updated succesfullly",
+                Type = "Profile",
+            };
+            await recentActivityService.Add(item);
             await _hubContext.Clients.User(userId).SendAsync("RecentActivityUpdate1");
             return Ok(new { message = "Edit successful" });
         }
 
+        [Authorize]
+        [HttpPut("AddingOccupationDuringQuiz")]
 
-        [HttpPost("AddingOccupationDuringQuiz")]
-
-        public async Task<IActionResult> AddOccupationDuringQuiz([FromBody] UserDto dto)
+        public async Task<IActionResult> AddOccupationDuringQuiz([FromBody] UpdateProfileDto dto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(new { message = "Invalid data provided." });
             }
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+            {
+                return BadRequest(new { message = "User not authenticated." });
+            }
+
+            var user = await _userService.GetUserById(userId);
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found." });
+            }
+            user.Occupation = dto.Occupation;
+            await _userService.Update(user);
 
 
 
-
-            return Ok(new { message = "Add occupation successful" });
+            return Ok(new { message = "Add occupation successfully" });
         }
 
     }

@@ -6,10 +6,12 @@ namespace Task_Flow.Business.Cocrete
     public class QuizService : IQuizService
     {
         private readonly IQuizDal dal;
+        private readonly IUserDal ual;
 
-        public QuizService(IQuizDal dal)
+        public QuizService(IQuizDal dal, IUserDal ual)
         {
             this.dal = dal;
+            this.ual = ual;
         }
 
         public async Task Add(Quiz quiz)
@@ -26,10 +28,12 @@ namespace Task_Flow.Business.Cocrete
 
         public async Task<int> SpecialOccupationCount(string occupation)
         {
+            var temp = await ual.GetAll(u => u.Occupation == occupation);
 
-            var list = await dal.GetAll();
-          return list.Where(p=>p.UsagePurpose == occupation).ToList().Count();
+            // var list = await dal.GetAll();
+            return temp.ToList().Count();
         }
+    
 
         public async Task Update(Quiz quiz)
         {

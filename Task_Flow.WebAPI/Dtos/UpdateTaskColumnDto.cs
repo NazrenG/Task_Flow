@@ -1,8 +1,8 @@
 ﻿namespace Task_Flow.WebAPI.Dtos
 {
-    public class UpdateTaskStatusDto
+    public class UpdateTaskColumnDto
     {
+        public int TaskId { get; set; }
         public int NewCanbanColumnId { get; set; }
-        public string NewStatus { get; set; }
     }
 }

@@ -97,11 +97,11 @@ namespace Task_Flow.WebAPI.Controllers
             {
                 return Unauthorized(new { message = "User not authenticated." });
             }
-             
+
             var userProjects = await _projectService.GetProjects(userId);
             if (userProjects == null || !userProjects.Any())
             {
-                // Eğer kullanıcının projesi yoksa, tüm meslekler %0 olarak dönecek
+
                 var emptyStatistics = OccupationList.Select(occupation => new OccupationStatisticDto
                 {
                     OccupationName = occupation,
@@ -110,13 +110,12 @@ namespace Task_Flow.WebAPI.Controllers
                 return Ok(emptyStatistics);
             }
 
-            // Proje Id'lerini al
             var projectIds = userProjects.Select(p => p.Id).ToList();
 
-            // Projelerdeki üyeleri al
+
             var members = await _memberService.GetUsersByProjectIdsAsync(projectIds);
 
-            // Eğer üyeler yoksa, tüm meslekler %0 olarak dönecek
+
             if (members == null || !members.Any())
             {
                 var emptyStatistics = OccupationList.Select(occupation => new OccupationStatisticDto
@@ -127,7 +126,6 @@ namespace Task_Flow.WebAPI.Controllers
                 return Ok(emptyStatistics);
             }
 
-            // Meslek istatistiklerini oluştur
             var totalCount = members.Count;
             var occupationStatistics = OccupationList.Select(occupation =>
             {
@@ -143,32 +141,44 @@ namespace Task_Flow.WebAPI.Controllers
             return Ok(occupationStatistics);
         }
 
-
-
-
-
-        // put api/<QuizController>
-        [HttpPut("Profession")]
-        public async Task<IActionResult> PutProfession([FromBody] string value)
+        [HttpPost("NewQuiz")]
+        public async Task<IActionResult> CreateQuiz([FromBody] QuizDto dto)
         {
-            var items = await _quizService.Quizzes();
-            var last = items.Last();
+            var quiz = new Quiz
+            {
+                Profession = dto.Profession,
+                UsagePurpose = dto.UsagePurpose,
+            };
 
-            last.Profession = value;
-            await _quizService.Update(last);
+            await _quizService.Add(quiz);
+
             return Ok();
         }
 
-        [HttpPut("Occupation")]
-        public async Task<IActionResult> PutOccupation([FromBody] string value)
-        {
-            var items = await _quizService.Quizzes();
-            var last = items.Last();
+        //kohne
 
-            last.UsagePurpose = value;
-            await _quizService.Update(last);
-            return Ok();
-        }
+        //// put api/<QuizController>
+        //[HttpPut("Profession")]
+        //public async Task<IActionResult> PutProfession([FromBody] string value)
+        //{
+        //    var items = await _quizService.Quizzes();
+        //    var last = items.Last();
+
+        //    last.Profession = value;
+        //    await _quizService.Update(last);
+        //    return Ok();
+        //}
+
+        //[HttpPut("Occupation")]
+        //public async Task<IActionResult> PutOccupation([FromBody] string value)
+        //{
+        //    var items = await _quizService.Quizzes();
+        //    var last = items.Last();
+
+        //    last.UsagePurpose = value;
+        //    await _quizService.Update(last);
+        //    return Ok();
+        //}
 
 
     }

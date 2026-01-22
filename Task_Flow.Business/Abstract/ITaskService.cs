@@ -6,6 +6,8 @@ namespace Task_Flow.DataAccess.Abstract
     {
         Task<List<Work>> GetTasks(string userId);
         Task<List<Work>>GetByProjectId(int projectId);
+
+        Task<List<Work>> GetBacklogs(int projectId);//without sprint Id
         Task<Work> GetTaskById(int id);
      
       Task Add(Work task);
