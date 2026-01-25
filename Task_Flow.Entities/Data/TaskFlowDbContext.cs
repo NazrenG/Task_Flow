@@ -12,6 +12,10 @@ namespace Task_Flow.Entities.Data
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            //avtomatik hemise silinmemisleri getirsin
+            modelBuilder.Entity<UserTask>().HasQueryFilter(f=>!f.IsDeleted);
+            modelBuilder.Entity<Work>().HasQueryFilter(f=>!f.IsDeleted);
+
             modelBuilder.Entity<Friend>()
                 .HasOne(f => f.User)
                 .WithMany(u => u.Friends)

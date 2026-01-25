@@ -333,6 +333,7 @@ namespace Task_Flow.WebAPI.Controllers
                 Color = value.Color,
                 ProjectId = value.ProjectId,
                 CanbanColumnId = value.CanbanColumnId,
+                SprintId=value.SprintId,
             };
             await taskService.Add(item);
             try
@@ -396,7 +397,8 @@ namespace Task_Flow.WebAPI.Controllers
 
             //yeni task yaradilanda eger icaze varsa maile mesaj getsin
             var notificationSetting = await _notificationSettingService.GetNotificationSetting(userId);
-            if (notificationSetting.NewTaskWithInProject)
+          
+            if (notificationSetting!=null && notificationSetting.NewTaskWithInProject)
             {
                 mailService.SendEmail(member.Email, $"Hi,{member.Firstname} {member.Lastname}.You have a new task in the project named {project} ");
 

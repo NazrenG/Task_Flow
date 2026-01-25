@@ -20,7 +20,9 @@ namespace Task_Flow.Business.Cocrete
 
         public async Task Delete(Work task)
         {
-            await dal.Delete(task);
+            var temp=await dal.GetById(t=>t.Id==task.Id);
+            temp.IsDeleted=true;
+            await dal.Update(task);
         }
 
         public async Task<List<Work>> GetByProjectId(int projectId)

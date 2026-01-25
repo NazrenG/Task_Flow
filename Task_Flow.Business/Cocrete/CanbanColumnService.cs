@@ -80,7 +80,7 @@ namespace Task_Flow.Business.Cocrete
             var allCanbanColumn = await kanbanColumnDal.GetAll();
             var todoColumn = allCanbanColumn.First(x =>
                  x.ProjectId == canbanName.ProjectId &&
-                 x.StatusKey == "todo");
+                 x.StatusKey == "to do");
             if (todoColumn == null) throw new Exception("To Do column not found");
 
             var tasks = await workDal.GetAll(t => t.CanbanColumnId == canbanNameId)

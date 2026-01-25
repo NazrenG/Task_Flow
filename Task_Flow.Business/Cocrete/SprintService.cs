@@ -60,6 +60,12 @@ namespace Task_Flow.Business.Cocrete
             var task = await taskDal.GetById(t => t.Id == updateSprintDto.TaskId);
             var split = await splitDal.GetSprintById(updateSprintDto.SprintId);
 
+          
+
+            //project kanban elaqesine gore deafult to do ya elave et , sonradan deyis sprint colummn elaqesine gore
+
+
+
             split.Works.Add(task);
             await splitDal.Update(split);
             return (split);

@@ -30,7 +30,9 @@ namespace Task_Flow.Business.Cocrete
 
         public async Task Delete(UserTask assign)
         {
-            await taskAssignDal.Delete(assign);
+            var task=await taskAssignDal.GetById(t=>t.Id==assign.Id);
+            task.IsDeleted = true;
+            await taskAssignDal.Update(assign);
         }
 
         public async Task<UserTask> GetById(int id)
