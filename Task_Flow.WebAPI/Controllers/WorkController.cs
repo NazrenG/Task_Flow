@@ -356,6 +356,8 @@ namespace Task_Flow.WebAPI.Controllers
 
                 //dashboard-da current project
                 await _context.Clients.User(member.Id).SendAsync("DashboardReceiveProject");
+                //backlog
+                await _context.Clients.All.SendAsync("UpdateBacklogTask");
 
 
 
