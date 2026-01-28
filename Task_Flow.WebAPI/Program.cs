@@ -85,6 +85,7 @@ builder.Services.AddScoped<IGroupChatMessageDal , GroupChatMessageDal>();
 builder.Services.AddScoped<IGroupChatMembersDal , GroupChatMembersDal>();
 builder.Services.AddScoped<IGroupChatService, GroupChatService>();
 builder.Services.AddSingleton<MessageEncryptionService>();
+builder.Services.AddScoped<IPremiumUserService, PremiumUserService>();
 
 
 // Identity configuration (only user management, no roles)

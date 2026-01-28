@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.SignalR;
 using Task_Flow.WebAPI.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Task_Flow.WebAPI.Hubs;
+using System.ComponentModel.DataAnnotations;
 
 namespace Task_Flow.WebAPI.Controllers
 {
@@ -31,9 +32,10 @@ namespace Task_Flow.WebAPI.Controllers
         private readonly IHubContext<ConnectionHub> _hub;
         private readonly IProjectService projectService;
         private readonly MailService mailService;
+        private readonly IPremiumUserService _premiumUserService;
         private readonly ITeamMemberService memberService;
 
-        public NotificationController(INotificationService notificationService, IUserService userService, INotificationSettingService notificationSettingService, IRecentActivityService recentActivityService, IRequestNotificationService requestNotificationService, UserManager<CustomUser> userManager, IFriendService friendService, MailService mailService, IHubContext<ConnectionHub> hub, ITeamMemberService memberService, IProjectService projectService)
+        public NotificationController(INotificationService notificationService, IUserService userService, INotificationSettingService notificationSettingService, IRecentActivityService recentActivityService, IRequestNotificationService requestNotificationService, UserManager<CustomUser> userManager, IFriendService friendService, MailService mailService, IHubContext<ConnectionHub> hub, ITeamMemberService memberService, IProjectService projectService,IPremiumUserService premiumUserService)
         {
             this.notificationService = notificationService;
             this.userService = userService;
@@ -46,6 +48,7 @@ namespace Task_Flow.WebAPI.Controllers
             _hub = hub;
             this.memberService = memberService;
             this.projectService = projectService;
+            _premiumUserService= premiumUserService;
         }
 
         [Authorize]
@@ -358,12 +361,21 @@ namespace Task_Flow.WebAPI.Controllers
             {
                 return Unauthorized(new { message = "user not found" });
             }
-            var sender=await userService.GetUserById(userId);
+
+            if (dto.NotificationType=="FriendRequest") {
+            var result = await _premiumUserService.IsUserAllowedToSendRequestAsync(userId);
+                if (!result.Allowed) return Ok(new { message = result.Message, allowed = false });
+            }
+
+
+            var sender =await userService.GetUserById(userId);
             var receiverUser = await _userManager.FindByEmailAsync(dto.ReceiverEmail);
             if (receiverUser == null)
             {
                 return BadRequest(new { message = "Receiver not found" });
             }
+
+
 
             var item = new RequestNotification
             {
@@ -399,7 +411,8 @@ namespace Task_Flow.WebAPI.Controllers
                     Text = item.Text,
                     // SenderId = item.SenderId,
                     ReceiverEmail = receiverUser.Email,
-                }
+                },
+                allowed= true,
             });
         }
         [Authorize]

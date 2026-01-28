@@ -30,8 +30,9 @@ namespace Task_Flow.WebAPI.Controllers
         private readonly IHubContext<ConnectionHub> _hub;
         private readonly IRequestNotificationService _requestNotificationService;
         private readonly Business.Cocrete.MailService mailService;
+        private readonly IPremiumUserService _premiumUserService;
 
-        public ProjectController(IProjectService projectService, TaskFlowDbContext context, IUserService userService, ITaskService taskService, ITeamMemberService teamMemberService, IProjectActivityService projectActivity, IHubContext<ConnectionHub> hub, IRequestNotificationService requestNotificationService, Business.Cocrete.MailService mailService)
+        public ProjectController(IProjectService projectService, TaskFlowDbContext context, IUserService userService, ITaskService taskService, ITeamMemberService teamMemberService, IProjectActivityService projectActivity, IHubContext<ConnectionHub> hub, IRequestNotificationService requestNotificationService, Business.Cocrete.MailService mailService, IPremiumUserService premiumUserService)
         {
             _projectService = projectService;
             _context = context;
@@ -42,6 +43,7 @@ namespace Task_Flow.WebAPI.Controllers
             _hub = hub;
             _requestNotificationService = requestNotificationService;
             this.mailService = mailService;
+            _premiumUserService = premiumUserService;
         }
 
         [HttpGet("ProjectTitle/{projectId}")]
@@ -371,6 +373,8 @@ namespace Task_Flow.WebAPI.Controllers
                 Title = value.Title,
                 Color = value.Color,
             };
+            var result = await _premiumUserService.IsUserAllowedToCreateProjectAsync(userId, item);
+            if (!result.Allowed) { return Ok(new { message = result.Message, allowed = false }); }
             await _projectService.Add(item);
 
 
@@ -386,7 +390,7 @@ namespace Task_Flow.WebAPI.Controllers
                 await _hub.Clients.User(userId).SendAsync("UpdatePendingProjects");
             else if (value.Status == "Completed")
                 await _hub.Clients.User(userId).SendAsync("UpdateCompletedProjects");
-            return Ok(item);
+            return Ok(new {item=item,allowed=true});
         }
 
         [Authorize]

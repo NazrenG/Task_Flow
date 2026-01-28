@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Task_Flow.Core.Abstract;
+using Task_Flow.Entities.Enums;
 
 namespace Task_Flow.Entities.Models
 {
@@ -16,8 +17,9 @@ namespace Task_Flow.Entities.Models
         public DateTime? Birthday { get; set; }
         public DateTime? RegisterDate { get; set; }
         public DateTime? LastLoginDate { get; set; }
-   
 
+
+        public PlanType PlanType { get; set; } = PlanType.Free;
         // Navigation properties
         public virtual List<Project>? Projects { get; set; }
         public virtual List<Work>? TaskForUsers { get; set; }

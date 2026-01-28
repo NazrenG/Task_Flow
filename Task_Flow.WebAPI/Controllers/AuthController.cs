@@ -37,11 +37,11 @@ namespace Task_Flow.WebAPI.Controllers
 
         [Authorize]
         [HttpPost("searchedUser")]
-        public async Task<IActionResult>SearchUser([FromBody] string key)
+        public async Task<IActionResult>SearchUser([FromBody] SearchedUserDto dto)
         {
             var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            var users = await _userService.GetUserByName(key);
+            var users = await _userService.GetUserByName(dto.Key);
            var sort=users.Where(u=>u.Id!=userId).ToList();  
 
             return Ok(new {Users=sort});

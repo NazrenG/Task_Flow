@@ -129,6 +129,11 @@ namespace Task_Flow.Business.Cocrete
             return await _groupChatDal.GetById(c=>c.Id==groupId);   
         }
 
+        public async Task<bool> IsGroupAdminAsync(string userId,int groupId)
+        {
+           return (await _groupChatDal.GetById(g=>g.Id==groupId)).AdminId==userId;
+        }
+
         public async Task RemoveGroupMember(int groupId, string userId  )
         {
 
