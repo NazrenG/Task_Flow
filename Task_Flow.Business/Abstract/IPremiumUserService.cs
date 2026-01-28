@@ -14,6 +14,8 @@ namespace Task_Flow.Business.Abstract
         Task<ResultService> IsUserAllowedToSendRequestAsync(string senderId);
         Task<ResultService> IsUserAllowedToAddTeammember(int teammemberCount, string userId);
         Task<ResultService>IsUserAllowedToCreateGroupChat(string userId);
+        Task UpgradeUserPlanToPremium(string userId);
+        Task UpgradeUserPlanToBusiness(string userId);
 
     }
 }

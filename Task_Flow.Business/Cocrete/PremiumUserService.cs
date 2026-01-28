@@ -67,5 +67,17 @@ namespace Task_Flow.Business.Cocrete
 
             return ResultService.Ok();
         }
+
+        public async Task UpgradeUserPlanToPremium(string userId)
+        {
+           var user=await _dal.GetById(u=>u.Id == userId);
+            user.PlanType = PlanType.Premium;
+        }
+
+        public async Task UpgradeUserPlanToBusiness(string userId)
+        {
+            var user = await _dal.GetById(u => u.Id == userId);
+            user.PlanType = PlanType.Business;
+        }
     }
 }
