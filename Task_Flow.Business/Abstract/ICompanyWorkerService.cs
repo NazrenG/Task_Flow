@@ -14,5 +14,6 @@ namespace Task_Flow.Business.Abstract
         Task<CompanyWorker> GetCompanyWorkers(int workerId);
         Task RemoveCompanyWorker(int workerId);
         Task AddWorkerToCompany(CompanyWorker companyWorker);
+        Task SelectedUsersForCompany(int companyId);
     }
 }

@@ -17,10 +17,12 @@ namespace Task_Flow.Entities.Models
         public DateTime? Birthday { get; set; }
         public DateTime? RegisterDate { get; set; }
         public DateTime? LastLoginDate { get; set; }
-
+        public int CompanyId { get; set; }
 
         public PlanType PlanType { get; set; } = PlanType.Free;
         // Navigation properties
+        public virtual Company Company { get; set; }
+
         public virtual List<Project>? Projects { get; set; }
         public virtual List<Work>? TaskForUsers { get; set; }
         public virtual List<TeamMember>? TeamMembers { get; set; }
@@ -35,6 +37,7 @@ namespace Task_Flow.Entities.Models
         public virtual List<RequestNotification> RequestNotificationsSender { get; set; }
         public virtual List<RequestNotification> RequestNotificationsReceiver { get; set; }
         public virtual ICollection<Chat>? Chats { get; set; }
+        public ICollection<CompanyWorker> CompanyWorkers { get; set; }
         public virtual List<UserTask> UserTasks { get; set; }
 
         public virtual NotificationSetting Setting { get; set; }

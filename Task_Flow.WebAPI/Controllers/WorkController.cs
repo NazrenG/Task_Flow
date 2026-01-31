@@ -78,6 +78,7 @@ namespace Task_Flow.WebAPI.Controllers
                     ProjectName = p.Project?.Title,
                     StartDate = p.StartTime,
                     Color = p.Color,
+                    CanbanColumnId=p.CanbanColumnId
                 };
             }).ToList();
             return Ok(items);
@@ -107,6 +108,7 @@ namespace Task_Flow.WebAPI.Controllers
                     ProjectId = p.ProjectId,
                     ProjectName = p.Project?.Title,
                     StartDate = p.StartTime,
+                    CanbanColumnId = p.CanbanColumnId
                 };
             }).ToList();
             return Ok(items);
@@ -140,6 +142,7 @@ namespace Task_Flow.WebAPI.Controllers
                 ProjectName = item.Project?.Title,
                 StartDate = item.StartTime,
                 Color = item.Color,
+                CanbanColumnId=item.CanbanColumnId
             };
             return Ok(work);
         }
@@ -207,6 +210,7 @@ namespace Task_Flow.WebAPI.Controllers
 
             item.Priority = value.Priority;
             item.Status = value.Status;
+            item.CanbanColumnId = value.CanbanColumnId;
             await taskService.Update(item);
 
             try
@@ -317,7 +321,7 @@ namespace Task_Flow.WebAPI.Controllers
             var project = await projectService.GetProjectNameById(value.ProjectId);
             var projectCreater = await projectService.GetProjectById(value.ProjectId);
 
-            if (projectCreater.CreatedById != userId) return BadRequest("You do not have permission to update tasks in this project.");
+          //  if (projectCreater.CreatedById != userId) return BadRequest("You do not have permission to update tasks in this project.");
             var item = new Work
             {
                 CreatedById = value.CreatedById,
@@ -328,6 +332,8 @@ namespace Task_Flow.WebAPI.Controllers
                 Title = value.Title,
                 Color = value.Color,
                 ProjectId = value.ProjectId,
+                CanbanColumnId = value.CanbanColumnId,
+                SprintId=value.SprintId,
             };
             await taskService.Add(item);
             try
@@ -350,6 +356,8 @@ namespace Task_Flow.WebAPI.Controllers
 
                 //dashboard-da current project
                 await _context.Clients.User(member.Id).SendAsync("DashboardReceiveProject");
+                //backlog
+                await _context.Clients.All.SendAsync("UpdateBacklogTask");
 
 
 
@@ -391,7 +399,8 @@ namespace Task_Flow.WebAPI.Controllers
 
             //yeni task yaradilanda eger icaze varsa maile mesaj getsin
             var notificationSetting = await _notificationSettingService.GetNotificationSetting(userId);
-            if (notificationSetting.NewTaskWithInProject)
+          
+            if (notificationSetting!=null && notificationSetting.NewTaskWithInProject)
             {
                 mailService.SendEmail(member.Email, $"Hi,{member.Firstname} {member.Lastname}.You have a new task in the project named {project} ");
 
@@ -676,7 +685,42 @@ namespace Task_Flow.WebAPI.Controllers
 
             if (works == null || !works.Any())
             {
-                return NotFound("No works found for the current user.");
+                works = new List<Work>();
+            }
+            var dtoList = works.Select(work => new WorkDetailsDto
+            {
+                TaskId = work.Id,
+                ProjectId = work.ProjectId,
+                ProjectName = work.Project?.Title,
+                MemberName = $"{work.CreatedBy?.Firstname} {work.CreatedBy?.Lastname}",
+                MemberImage = work.CreatedBy?.Image,
+                MemberMail = work.CreatedBy?.Email,
+                TaskTitle = work.Title,
+                StartTime = work.StartTime ?? DateTime.Now,
+                Deadline = work.Deadline,
+                Status = work.Status,
+                Priority = work.Priority
+            }).ToList();
+
+            return Ok(dtoList);
+        }
+
+        [Authorize]
+        [HttpGet("Backlogs/{projectId}")]
+        public async Task<IActionResult> GetBacklogs(int projectId)
+        {
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+            {
+                return BadRequest(new { message = "User not authenticated." });
+            }
+
+            var works = await taskService.GetBacklogs(projectId);
+
+
+            if (works == null || !works.Any())
+            {
+                works = new List<Work>();
             }
 
             var dtoList = works.Select(work => new WorkDetailsDto

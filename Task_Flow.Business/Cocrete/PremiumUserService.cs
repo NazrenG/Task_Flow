@@ -33,7 +33,7 @@ namespace Task_Flow.Business.Cocrete
 
             if (user.PlanType == PlanType.Free)
                 return await _project.GetUserProjectCount(userId) >= 3 ? ResultService.Fail("Free Plan users can't have more than 3 projects!") : (project.EndDate - project.StartDate).TotalDays > 90 ? ResultService.Fail("Free plan users cannot set a project deadline longer than 3 months.") : ResultService.Ok();
-            else if (user.PlanType == PlanType.Premium)
+            else if (user.PlanType== PlanType.Premium)
                 return (project.EndDate - project.StartDate).TotalDays > 366 ? ResultService.Fail("Premium users can set a project deadline up to 1 year. No longer than that.") : ResultService.Ok();
 
             return ResultService.Ok();
@@ -72,12 +72,21 @@ namespace Task_Flow.Business.Cocrete
         {
            var user=await _dal.GetById(u=>u.Id == userId);
             user.PlanType = PlanType.Premium;
+            await _dal.Update(user);
         }
 
         public async Task UpgradeUserPlanToBusiness(string userId)
         {
             var user = await _dal.GetById(u => u.Id == userId);
             user.PlanType = PlanType.Business;
+            await _dal.Update(user);  
+        }
+
+        public async Task SwitchToFreePlan(string userId)
+        {
+           var user =await _dal.GetById(u=>u.Id==userId);  
+            user.PlanType = PlanType.Free;
+            await _dal.Update(user);
         }
     }
 }

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Stripe;
 using System.Text;
 using Task_Flow.Business.Abstract;
 using Task_Flow.Business.Cocrete;
@@ -13,6 +14,10 @@ using Task_Flow.WebAPI.Hubs;
 using Task_Flow.WebAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+//stripe
+StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -71,7 +76,7 @@ builder.Services.AddScoped<INotificationSettingsDal,NotificationSettingDal>();
 builder.Services.AddScoped<INotificationSettingService, NotificationSettingService>();
 builder.Services.AddScoped<IRecentActivityDal,RecentActivityDal>(); 
 builder.Services.AddScoped<IRecentActivityService, RecentActivityService>();
-builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<IFileService, Task_Flow.Business.Cocrete.FileService>();
 builder.Services.AddScoped<IRequestNotificationDal, RequestNotificationDal>();
 builder.Services.AddScoped<IRequestNotificationService, RequestNotificationService>();
 builder.Services.AddScoped<IProjectActivityDal, ProjectActivityDal>();
@@ -86,6 +91,15 @@ builder.Services.AddScoped<IGroupChatMembersDal , GroupChatMembersDal>();
 builder.Services.AddScoped<IGroupChatService, GroupChatService>();
 builder.Services.AddSingleton<MessageEncryptionService>();
 builder.Services.AddScoped<IPremiumUserService, PremiumUserService>();
+builder.Services.AddScoped<ICanbanColumnDal, CanbanColumnDal>();
+builder.Services.AddScoped<ISprintDal, SprintDal>();
+builder.Services.AddScoped<ISprintService, SprintService>();
+builder.Services.AddScoped<ICanbanColumnService, CanbanColumnService>();
+builder.Services.AddScoped<ICompanyDal, CompanyDal>();
+builder.Services.AddScoped<ICompanyService, CompanyService>();
+builder.Services.AddScoped<ICompanyWorkerDal, CompanyWorkerDal>();
+builder.Services.AddScoped<ICompanyWorkerService, CompanyWorkerService>();
+builder.Services.AddScoped<IWorkDal, WorkDal>();
 
 
 // Identity configuration (only user management, no roles)

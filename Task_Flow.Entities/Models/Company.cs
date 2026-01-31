@@ -15,7 +15,10 @@ namespace Task_Flow.Entities.Models
         public DateTime CreatedDate { get; set; }
         public string Address { get; set; }
         public string Email {  get; set; }
-        List<CompanyWorker> Workers{ get; set; }
+        public bool IsDeleted { get; set; }
+        public bool IsPaid { get; set; } = false;
+       public  List<CompanyWorker> Workers{ get; set; }
+        public virtual CustomUser? Owner { get; set; }
         public Company()
         {
             Workers = new List<CompanyWorker>();

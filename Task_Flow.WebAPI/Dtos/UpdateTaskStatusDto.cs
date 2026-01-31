@@ -2,6 +2,7 @@
 {
     public class UpdateTaskStatusDto
     {
+        public int NewCanbanColumnId { get; set; }
         public string NewStatus { get; set; }
     }
 }

@@ -20,13 +20,15 @@ namespace Task_Flow.Business.Cocrete
 
         public async Task Delete(Work task)
         {
-            await dal.Delete(task);
+            var temp=await dal.GetById(t=>t.Id==task.Id);
+            temp.IsDeleted=true;
+            await dal.Update(task);
         }
 
         public async Task<List<Work>> GetByProjectId(int projectId)
         {
-            var list=await dal.GetAllTask();
-            return list.Where(t => t.ProjectId == projectId).ToList();
+            var list = await dal.GetAllTask();
+            return list.Where(t => t.ProjectId == projectId && t.SprintId != null).ToList();
         }
 
         public async Task<List<Work>> GetDoneTask(string userId)
@@ -63,6 +65,12 @@ namespace Task_Flow.Business.Cocrete
         public async Task Update(Work task)
         {
             await dal.Update(task);
+        }
+
+        public async Task<List<Work>> GetBacklogs(int projectId)
+        {
+            var list = await dal.GetAllTask();
+            return list.Where(p => p.ProjectId == projectId && p.SprintId == null).ToList();
         }
     }
 }

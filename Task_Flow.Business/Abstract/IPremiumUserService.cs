@@ -16,6 +16,7 @@ namespace Task_Flow.Business.Abstract
         Task<ResultService>IsUserAllowedToCreateGroupChat(string userId);
         Task UpgradeUserPlanToPremium(string userId);
         Task UpgradeUserPlanToBusiness(string userId);
+        Task SwitchToFreePlan(string userId);
 
     }
 }

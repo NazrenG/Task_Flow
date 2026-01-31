@@ -17,5 +17,8 @@
         public string? Color { get; set; }   
         public string? ProjectName { get; set; }   
         public string? CreatedById { get; set; }//userId
+        public int? CanbanColumnId { get; set; }
+        public int? SprintId { get; set; }
+
     }
 }

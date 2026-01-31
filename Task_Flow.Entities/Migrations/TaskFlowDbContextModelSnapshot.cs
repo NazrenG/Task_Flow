@@ -155,6 +155,38 @@ namespace Task_Flow.Entities.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Task_Flow.Entities.Models.CanbanColumn", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsFixed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StatusKey")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("CanbanColumns");
+                });
+
             modelBuilder.Entity("Task_Flow.Entities.Models.Chat", b =>
                 {
                     b.Property<int>("Id")
@@ -247,6 +279,84 @@ namespace Task_Flow.Entities.Migrations
                     b.ToTable("Comments");
                 });
 
+            modelBuilder.Entity("Task_Flow.Entities.Models.Company", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPaid")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OwnerId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId")
+                        .IsUnique();
+
+                    b.ToTable("Companies");
+                });
+
+            modelBuilder.Entity("Task_Flow.Entities.Models.CompanyWorker", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("JoinedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Occupation")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("CompanyWorkers");
+                });
+
             modelBuilder.Entity("Task_Flow.Entities.Models.CustomUser", b =>
                 {
                     b.Property<string>("Id")
@@ -260,6 +370,9 @@ namespace Task_Flow.Entities.Migrations
 
                     b.Property<string>("City")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -733,6 +846,37 @@ namespace Task_Flow.Entities.Migrations
                     b.ToTable("RequestNotifications");
                 });
 
+            modelBuilder.Entity("Task_Flow.Entities.Models.Sprint", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsOpen")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("Sprints");
+                });
+
             modelBuilder.Entity("Task_Flow.Entities.Models.TaskAssigne", b =>
                 {
                     b.Property<int>("Id")
@@ -830,6 +974,9 @@ namespace Task_Flow.Entities.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Priority")
                         .HasColumnType("nvarchar(max)");
 
@@ -857,6 +1004,9 @@ namespace Task_Flow.Entities.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("CanbanColumnId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Color")
                         .HasColumnType("nvarchar(max)");
 
@@ -869,10 +1019,16 @@ namespace Task_Flow.Entities.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Priority")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SprintId")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("StartTime")
@@ -886,9 +1042,13 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CanbanColumnId");
+
                     b.HasIndex("CreatedById");
 
                     b.HasIndex("ProjectId");
+
+                    b.HasIndex("SprintId");
 
                     b.ToTable("Works");
                 });
@@ -944,6 +1104,17 @@ namespace Task_Flow.Entities.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Task_Flow.Entities.Models.CanbanColumn", b =>
+                {
+                    b.HasOne("Task_Flow.Entities.Models.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+                });
+
             modelBuilder.Entity("Task_Flow.Entities.Models.Chat", b =>
                 {
                     b.HasOne("Task_Flow.Entities.Models.CustomUser", "Receiver")
@@ -983,6 +1154,36 @@ namespace Task_Flow.Entities.Migrations
                     b.Navigation("TaskForUser");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Task_Flow.Entities.Models.Company", b =>
+                {
+                    b.HasOne("Task_Flow.Entities.Models.CustomUser", "Owner")
+                        .WithOne("Company")
+                        .HasForeignKey("Task_Flow.Entities.Models.Company", "OwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("Task_Flow.Entities.Models.CompanyWorker", b =>
+                {
+                    b.HasOne("Task_Flow.Entities.Models.Company", "Company")
+                        .WithMany("Workers")
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Task_Flow.Entities.Models.CustomUser", "CustomUser")
+                        .WithMany("CompanyWorkers")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+
+                    b.Navigation("CustomUser");
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.Friend", b =>
@@ -1130,6 +1331,17 @@ namespace Task_Flow.Entities.Migrations
                     b.Navigation("Sender");
                 });
 
+            modelBuilder.Entity("Task_Flow.Entities.Models.Sprint", b =>
+                {
+                    b.HasOne("Task_Flow.Entities.Models.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+                });
+
             modelBuilder.Entity("Task_Flow.Entities.Models.TaskAssigne", b =>
                 {
                     b.HasOne("Task_Flow.Entities.Models.Work", "TaskForUser")
@@ -1189,6 +1401,10 @@ namespace Task_Flow.Entities.Migrations
 
             modelBuilder.Entity("Task_Flow.Entities.Models.Work", b =>
                 {
+                    b.HasOne("Task_Flow.Entities.Models.CanbanColumn", "CanbanColumn")
+                        .WithMany("TaskForUsers")
+                        .HasForeignKey("CanbanColumnId");
+
                     b.HasOne("Task_Flow.Entities.Models.CustomUser", "CreatedBy")
                         .WithMany("TaskForUsers")
                         .HasForeignKey("CreatedById")
@@ -1200,9 +1416,22 @@ namespace Task_Flow.Entities.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Task_Flow.Entities.Models.Sprint", "Sprint")
+                        .WithMany("Works")
+                        .HasForeignKey("SprintId");
+
+                    b.Navigation("CanbanColumn");
+
                     b.Navigation("CreatedBy");
 
                     b.Navigation("Project");
+
+                    b.Navigation("Sprint");
+                });
+
+            modelBuilder.Entity("Task_Flow.Entities.Models.CanbanColumn", b =>
+                {
+                    b.Navigation("TaskForUsers");
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.Chat", b =>
@@ -1210,11 +1439,21 @@ namespace Task_Flow.Entities.Migrations
                     b.Navigation("Messages");
                 });
 
+            modelBuilder.Entity("Task_Flow.Entities.Models.Company", b =>
+                {
+                    b.Navigation("Workers");
+                });
+
             modelBuilder.Entity("Task_Flow.Entities.Models.CustomUser", b =>
                 {
                     b.Navigation("Chats");
 
                     b.Navigation("Comments");
+
+                    b.Navigation("Company")
+                        .IsRequired();
+
+                    b.Navigation("CompanyWorkers");
 
                     b.Navigation("Friends");
 
@@ -1258,6 +1497,11 @@ namespace Task_Flow.Entities.Migrations
                     b.Navigation("TaskForUsers");
 
                     b.Navigation("TeamMembers");
+                });
+
+            modelBuilder.Entity("Task_Flow.Entities.Models.Sprint", b =>
+                {
+                    b.Navigation("Works");
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.Work", b =>

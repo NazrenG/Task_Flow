@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,6 +13,7 @@ namespace Task_Flow.Business.Cocrete
     public class CompanyWorkerService : ICompanyWorkerService
     {
         private readonly ICompanyWorkerDal _companyWorkerDal;
+        private readonly IUserDal _userDal;
         public CompanyWorkerService(ICompanyWorkerDal companyWorkerDal)
         {
             _companyWorkerDal = companyWorkerDal;
@@ -36,6 +38,17 @@ namespace Task_Flow.Business.Cocrete
         {
             var worker = await _companyWorkerDal.GetById(w=>w.Id==workerId);
             await _companyWorkerDal.Delete(worker);
+        }
+
+        public async Task SelectedUsersForCompany(int companyId)
+
+        {
+            var firstlistUserIds=(await _companyWorkerDal.GetAll()).Select(u=>u.UserId);
+            
+            var usersNotInSecondList = (await _userDal.GetAll())
+            .Where(u => !firstlistUserIds.Contains(u.Id))
+            .ToList();
+
         }
     }
 }
