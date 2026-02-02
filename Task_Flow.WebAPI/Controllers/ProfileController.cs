@@ -42,6 +42,66 @@ namespace Task_Flow.WebAPI.Controllers
             _fileService = fileService;
             this.recentActivityService = recentActivityService;
         }
+        [Authorize]
+        [HttpGet("profile")]
+        public async Task<IActionResult> ViewProfile()
+        {
+            try
+            {
+                var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new { message = "User not authenticated" });
+
+                var user = await _userService.GetUserById(userId);
+
+                if (user == null)
+                    return NotFound(new { message = "User not found" });
+
+                return Ok(new
+                {
+                    userId= userId,
+                    userName = user.UserName,
+                    email = user.Email,
+                    firstname = user.Firstname,
+                    lastname = user.Lastname,
+                    image = user.Image,
+                    gitHubAccessToken = user.GitHubAccessToken,
+                    gitHubUsername = user.GitHubUsername
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Profile Error: {ex.Message}");
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        [Authorize]
+        [HttpPost("disconnect-github")]
+        public async Task<IActionResult> DisconnectGitHub()
+        {
+            try
+            {
+                var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var user = await _userService.GetUserById(userId);
+
+                if (user != null)
+                {
+                    user.GitHubAccessToken = null;
+                    user.GitHubUsername = null;
+                    await _userService.Update(user);
+                }
+
+                return Ok(new { message = "GitHub disconnected successfully" });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Disconnect GitHub Error: {ex.Message}");
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
 
         [HttpGet("{email}")]
         public async Task<IActionResult> GetUserProfile(string email)

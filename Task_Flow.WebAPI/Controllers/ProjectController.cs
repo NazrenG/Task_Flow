@@ -33,8 +33,8 @@ namespace Task_Flow.WebAPI.Controllers
         private readonly Business.Cocrete.MailService mailService;
         private readonly ICanbanColumnService canbanColumnService;
 
-
-        public ProjectController(IProjectService projectService, TaskFlowDbContext context, IUserService userService, ITaskService taskService, ITeamMemberService teamMemberService, IProjectActivityService projectActivity, IHubContext<ConnectionHub> hub, IRequestNotificationService requestNotificationService, Business.Cocrete.MailService mailService, ICanbanColumnService canbanColumnService)
+        private IGitHubService _gitHubService;
+        public ProjectController(IProjectService projectService, TaskFlowDbContext context, IUserService userService, ITaskService taskService, ITeamMemberService teamMemberService, IProjectActivityService projectActivity, IHubContext<ConnectionHub> hub, IRequestNotificationService requestNotificationService, Business.Cocrete.MailService mailService, ICanbanColumnService canbanColumnService, IGitHubService gitHubService)
         {
             _projectService = projectService;
             _context = context;
@@ -46,6 +46,7 @@ namespace Task_Flow.WebAPI.Controllers
             _requestNotificationService = requestNotificationService;
             this.mailService = mailService;
             this.canbanColumnService = canbanColumnService;
+            _gitHubService = gitHubService;
         }
 
         [HttpGet("ProjectTitle/{projectId}")]
@@ -376,10 +377,15 @@ namespace Task_Flow.WebAPI.Controllers
         // POST api/<ProjectController>
         [Authorize]///Sevgi
         [HttpPost]///Sevgi
-        public async Task<IActionResult> Post([FromBody] ProjectDto value)
+        public async Task<IActionResult> Post([FromBody] CreateProjectDto value)
         {
             var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
+            var user=await _userService.GetUserById(userId);
+            var repoUrl = await _gitHubService.CreateRepository(
+          user.GitHubAccessToken,
+          value.Title,
+          value.Description
+      );
 
             var item = new Project
             {
@@ -392,6 +398,8 @@ namespace Task_Flow.WebAPI.Controllers
                 IsCompleted = value.IsCompleted,
                 Title = value.Title,
                 Color = value.Color,
+                GitHubRepositoryName=value.GitHubRepositoryName,
+                GitHubRepositoryUrl=value.GitHubRepositoryUrl
             };
             await _projectService.Add(item);
             //default canban name

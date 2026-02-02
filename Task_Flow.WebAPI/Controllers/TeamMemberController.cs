@@ -27,8 +27,9 @@ namespace Task_Flow.WebAPI.Controllers
         private readonly IHubContext<ConnectionHub> _hub;
         private readonly  IRequestNotificationService _requestNotificationService;
         private readonly INotificationSettingService _notificationSettingService;
+        private readonly IGitHubService _gitHubService;
 
-        public TeamMemberController(ITeamMemberService teamMemberService, IUserService userService, IProjectService projectService, IRequestNotificationService requestNotificationService, IHubContext<ConnectionHub> hub, INotificationSettingService notificationSettingService,MailService mailServicse)
+        public TeamMemberController(ITeamMemberService teamMemberService, IUserService userService, IProjectService projectService, IRequestNotificationService requestNotificationService, IHubContext<ConnectionHub> hub, INotificationSettingService notificationSettingService, MailService mailServicse, IGitHubService gitHubService)
         {
             _userService = userService;
             _teamMemberService = teamMemberService;
@@ -36,8 +37,9 @@ namespace Task_Flow.WebAPI.Controllers
             this.mailService = mailServicse;
             _requestNotificationService = requestNotificationService;
             _hub = hub;
-            
+
             _notificationSettingService = notificationSettingService;
+            _gitHubService = gitHubService;
         }
 
         [HttpGet("AllMember")]
@@ -79,11 +81,28 @@ namespace Task_Flow.WebAPI.Controllers
             {
                 return BadRequest();
             }
+            var member = await _userService.GetUserById(value.UserId);
+
+            if (string.IsNullOrEmpty(member.GitHubUsername))
+                return BadRequest("İstifadəçi GitHub hesabını qoşmalıdır");
+            var project = await _projectService.GetProjectById(value.ProjectId);
+
+            // Add as collaborator on GitHub
+            var success = await _gitHubService.AddCollaborator(
+                project.CreatedBy.GitHubAccessToken,
+                project.CreatedBy.GitHubUsername,
+                project.GitHubRepositoryName,
+                member.GitHubUsername
+            );
+            if (!success)
+                return StatusCode(500, "GitHub-da əlavə edilə bilmədi");
+
             var item = new TeamMember
             {
                 ProjectId = value.ProjectId,
                 UserId = value.UserId,
-               
+                GitHubAccessGranted = true
+
             };
            await _teamMemberService.Add(item);
             return Ok(item);
