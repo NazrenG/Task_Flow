@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using Task_Flow.Business.DTOs;
 using Task_Flow.Entities.Models;
 
 namespace Task_Flow.Business.Abstract
@@ -14,6 +15,7 @@ namespace Task_Flow.Business.Abstract
         Task<CompanyWorker> GetCompanyWorkers(int workerId);
         Task RemoveCompanyWorker(int workerId);
         Task AddWorkerToCompany(CompanyWorker companyWorker);
-        Task SelectedUsersForCompany(int companyId);
+        Task<List<SelectedCompanyUserDto>> SelectedUsersForCompany(int companyId);
+        Task<List<SearchedWorkerDto>> SearchWorkerByKey(string key, int companyId);
     }
 }

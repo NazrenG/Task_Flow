@@ -13,9 +13,11 @@ namespace Task_Flow.Business.Cocrete
     public class CompanyService : ICompanyService
     {
         private readonly ICompanyDal _companyDal;
-        public CompanyService(ICompanyDal companyDal)
+        private readonly IProjectDal _projectDal;
+        public CompanyService(ICompanyDal companyDal, IProjectDal projectDal)
         {
             _companyDal = companyDal;
+            _projectDal = projectDal;
         }
 
         public async Task AddWorkerToCompany(CompanyWorker worker, int companyId)
@@ -49,6 +51,15 @@ namespace Task_Flow.Business.Cocrete
                 CreatedDate = company.CreatedDate.ToShortTimeString(),
             }:null;
         }
+
+        public async Task<List<CompanyProjectDto>> GetCompanyProjects(int companyId)
+        {
+            var projects = await _projectDal.GetAll(c => c.CompanyId==companyId);
+            var list =projects.Select(p => { return new CompanyProjectDto { Id = p.Id, ProjectName = p.Title }; }).ToList();
+            return list;
+        }
+
+     
 
         public async Task UpdateCompany(int id, string name, string email, string address)
         {

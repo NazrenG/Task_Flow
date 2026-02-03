@@ -17,11 +17,13 @@ namespace Task_Flow.Entities.Models
         public string Email {  get; set; }
         public bool IsDeleted { get; set; }
         public bool IsPaid { get; set; } = false;
-       public  List<CompanyWorker> Workers{ get; set; }
+       public virtual  List<CompanyWorker> Workers{ get; set; }
+       public  virtual List<Project> Projects{ get; set; }
         public virtual CustomUser? Owner { get; set; }
         public Company()
         {
             Workers = new List<CompanyWorker>();
+            Projects = new List<Project>();
         }
     }
 }

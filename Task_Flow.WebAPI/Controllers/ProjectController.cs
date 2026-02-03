@@ -33,9 +33,10 @@ namespace Task_Flow.WebAPI.Controllers
         private readonly Business.Cocrete.MailService mailService;
         private readonly ICanbanColumnService canbanColumnService;
         private readonly IPremiumUserService _premiumUserService;
+        private readonly ICompanyService _companyService;
 
 
-        public ProjectController(IProjectService projectService, TaskFlowDbContext context, IUserService userService, ITaskService taskService, ITeamMemberService teamMemberService, IProjectActivityService projectActivity, IHubContext<ConnectionHub> hub, IRequestNotificationService requestNotificationService, Business.Cocrete.MailService mailService, ICanbanColumnService canbanColumnService, IPremiumUserService premiumUserService)
+        public ProjectController(IProjectService projectService, TaskFlowDbContext context, IUserService userService, ITaskService taskService, ITeamMemberService teamMemberService, IProjectActivityService projectActivity, IHubContext<ConnectionHub> hub, IRequestNotificationService requestNotificationService, Business.Cocrete.MailService mailService, ICanbanColumnService canbanColumnService, IPremiumUserService premiumUserService, ICompanyService companyService)
         {
             _projectService = projectService;
             _context = context;
@@ -48,6 +49,7 @@ namespace Task_Flow.WebAPI.Controllers
             this.mailService = mailService;
             this.canbanColumnService = canbanColumnService;
             _premiumUserService = premiumUserService;
+            _companyService = companyService;
         }
 
         [HttpGet("ProjectTitle/{projectId}")]
@@ -395,6 +397,10 @@ namespace Task_Flow.WebAPI.Controllers
                 Title = value.Title,
                 Color = value.Color,
             };
+            if (value.IsCompanyProject) {
+                var company = await _companyService.GetCompany(userId);
+                item.CompanyId=company.CompanyId;
+            }
             var result = await _premiumUserService.IsUserAllowedToCreateProjectAsync(userId, item);
             if (!result.Allowed) { return Ok(new { message = result.Message, allowed = false }); }
             await _projectService.Add(item);

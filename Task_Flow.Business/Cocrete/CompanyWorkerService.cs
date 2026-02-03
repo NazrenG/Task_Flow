@@ -5,7 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Task_Flow.Business.Abstract;
+using Task_Flow.Business.DTOs;
 using Task_Flow.DataAccess.Abstract;
+using Task_Flow.DataAccess.Concrete;
 using Task_Flow.Entities.Models;
 
 namespace Task_Flow.Business.Cocrete
@@ -13,10 +15,13 @@ namespace Task_Flow.Business.Cocrete
     public class CompanyWorkerService : ICompanyWorkerService
     {
         private readonly ICompanyWorkerDal _companyWorkerDal;
+        private readonly ICompanyDal _companyDal;
         private readonly IUserDal _userDal;
-        public CompanyWorkerService(ICompanyWorkerDal companyWorkerDal)
+        public CompanyWorkerService(ICompanyWorkerDal companyWorkerDal, IUserDal userDal, ICompanyDal companyDal)
         {
             _companyWorkerDal = companyWorkerDal;
+            _userDal = userDal;
+            _companyDal = companyDal;
         }
 
         public async Task AddWorkerToCompany(CompanyWorker companyWorker)
@@ -37,17 +42,50 @@ namespace Task_Flow.Business.Cocrete
         public async Task RemoveCompanyWorker(int workerId)
         {
             var worker = await _companyWorkerDal.GetById(w=>w.Id==workerId);
-            await _companyWorkerDal.Delete(worker);
+            worker.IsDeleted = true;
+            await _companyWorkerDal.Update(worker);
         }
 
-        public async Task SelectedUsersForCompany(int companyId)
+        public async Task<List<SearchedWorkerDto>> SearchWorkerByKey(string key, int companyId)
+        {
+            key = key?.Trim().ToLower();
+            var workers=await _companyWorkerDal.GetAll(c=>c.CompanyId==companyId);
+            if (!workers.Any())
+                return new List<SearchedWorkerDto>();
+
+            var userIds = workers.Select(w => w.UserId).ToList();
+
+            var users = await _userDal.GetAll(u =>
+       userIds.Contains(u.Id) &&
+       u.UserName.ToLower().Contains(key)
+   );
+
+            var result = workers
+      .Where(w => users.Any(u => u.Id == w.UserId))
+      .Select(w =>
+      {
+          var user = users.First(u => u.Id == w.UserId);
+          return new SearchedWorkerDto
+          {
+              Username = user.UserName,
+              Fullname = user.Firstname+" "+user.Lastname,
+          };
+      })
+      .ToList();
+
+            return result;
+        }
+
+        public async Task<List<SelectedCompanyUserDto>> SelectedUsersForCompany(int companyId)
 
         {
             var firstlistUserIds=(await _companyWorkerDal.GetAll()).Select(u=>u.UserId);
-            
+            var company=await _companyDal.GetById(c=>c.Id==companyId);
             var usersNotInSecondList = (await _userDal.GetAll())
-            .Where(u => !firstlistUserIds.Contains(u.Id))
+            .Where(u => !firstlistUserIds.Contains(u.Id)&&u.Id!=company.OwnerId)
             .ToList();
+
+            return  usersNotInSecondList.Select(u=>new SelectedCompanyUserDto { Fullname=u.Firstname+" "+u.Lastname,Username=u.UserName, Id=u.Id}).ToList();
 
         }
     }

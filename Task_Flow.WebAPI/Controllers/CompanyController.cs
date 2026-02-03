@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Task_Flow.Business.Abstract;
+using Task_Flow.Business.DTOs;
 using Task_Flow.DataAccess.Abstract;
 using Task_Flow.Entities.Models;
 using Task_Flow.WebAPI.Dtos;
@@ -46,6 +47,54 @@ namespace Task_Flow.WebAPI.Controllers
            return Ok(new {Company=company,state=true});
         }
 
+        [HttpGet("GetSortedUsers/{companyId}")]
+        public async Task<IActionResult> GetSortedUsers(int companyId)
+        {
+            var users = await _companyWorkerService.SelectedUsersForCompany(companyId);
+            return Ok(new {Users=users});
+        }
+        
+        [HttpGet("GetCompanyWorkers/{companyId}")]
+        public async Task<IActionResult> GetCompanyWorkers(int companyId)
+        {
+            var users = await _companyWorkerService.GetAllCompanyWorkers(w=>w.CompanyId== companyId);
+            var dtos = new List<GetCompanyWorkersDto>();
+            foreach (var item in users)
+            {
+                var user = await _userService.GetUserById(item.UserId);
+                dtos.Add(new GetCompanyWorkersDto { Id = item.Id, Fullname = user.Firstname + " " + user.Lastname, Username = user.UserName,Occupation=item.Occupation });
+            }
+            return Ok(new {Users=dtos});
+        }
+
+        [HttpGet("GetCompanyProjects/{companyId}")]
+        public async Task<IActionResult> GetCompanyProjects(int companyId)
+        {
+            var users = await _companyService.GetCompanyProjects(companyId);
+            //var dtos = new List<GetCompanyWorkersDto>();
+            //foreach (var item in users)
+            //{
+            //    var user = await _userService.GetUserById(item.UserId);
+            //    dtos.Add(new GetCompanyWorkersDto { Id = item.Id, Fullname = user.Firstname + " " + user.Lastname, Username = user.UserName, Occupation = item.Occupation });
+            //}
+            return Ok(new { Users = users });
+        }
+
+        [HttpGet("SearchWorkerByKey")]
+        public async Task<IActionResult> SearchWorkerByKey(
+    [FromQuery] string key,
+    [FromQuery] int companyId)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+                return BadRequest("Search key is required");
+
+            var result = await _companyWorkerService.SearchWorkerByKey(key, companyId);
+
+            return Ok(result);
+        }
+
+
+
         // POST api/<CompantController>
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] CreateCompanyDto value)
@@ -85,6 +134,13 @@ namespace Task_Flow.WebAPI.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             await _companyService.DeleteCompany(id);
+            return Ok();
+        }
+
+        [HttpDelete("RemoveCompanyWorker/{id}")]
+        public async Task<IActionResult> RemoveCompanyWorker(int id)
+        {
+            await _companyWorkerService.RemoveCompanyWorker(id);
             return Ok();
         }
     }

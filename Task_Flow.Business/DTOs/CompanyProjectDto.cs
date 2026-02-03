@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace Task_Flow.Business.DTOs
 {
-    public class SelectedCompanyUsers
+    public class CompanyProjectDto
     {
-        public string Username { get; set; }
-        public string Fullname { get; set; }
+        public string ProjectName{ get; set; }
+        public int Id { get; set; }
 
     }
 }

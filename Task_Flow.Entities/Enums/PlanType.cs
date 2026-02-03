@@ -10,6 +10,7 @@ namespace Task_Flow.Entities.Enums
     {
         Free = 0,
         Premium = 1,
-        Business = 2
+        Business = 2,
+        CompanyWorker=3
     }
 }

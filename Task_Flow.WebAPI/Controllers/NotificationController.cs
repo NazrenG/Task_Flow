@@ -14,6 +14,7 @@ using Task_Flow.WebAPI.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Task_Flow.WebAPI.Hubs;
 using System.ComponentModel.DataAnnotations;
+using Task_Flow.Entities.Enums;
 
 namespace Task_Flow.WebAPI.Controllers
 {
@@ -29,13 +30,15 @@ namespace Task_Flow.WebAPI.Controllers
         private readonly IRequestNotificationService requestNotificationService;
         private readonly UserManager<CustomUser> _userManager;
         private readonly IFriendService friendService;
+        private readonly ICompanyWorkerService companyWorkerService;
+        private readonly ICompanyService companyService;
         private readonly IHubContext<ConnectionHub> _hub;
         private readonly IProjectService projectService;
         private readonly MailService mailService;
         private readonly IPremiumUserService _premiumUserService;
         private readonly ITeamMemberService memberService;
 
-        public NotificationController(INotificationService notificationService, IUserService userService, INotificationSettingService notificationSettingService, IRecentActivityService recentActivityService, IRequestNotificationService requestNotificationService, UserManager<CustomUser> userManager, IFriendService friendService, MailService mailService, IHubContext<ConnectionHub> hub, ITeamMemberService memberService, IProjectService projectService,IPremiumUserService premiumUserService)
+        public NotificationController(INotificationService notificationService, IUserService userService, INotificationSettingService notificationSettingService, IRecentActivityService recentActivityService, IRequestNotificationService requestNotificationService, UserManager<CustomUser> userManager, IFriendService friendService, MailService mailService, IHubContext<ConnectionHub> hub, ITeamMemberService memberService, IProjectService projectService, IPremiumUserService premiumUserService, ICompanyService companyService, ICompanyWorkerService companyWorkerService)
         {
             this.notificationService = notificationService;
             this.userService = userService;
@@ -48,7 +51,9 @@ namespace Task_Flow.WebAPI.Controllers
             _hub = hub;
             this.memberService = memberService;
             this.projectService = projectService;
-            _premiumUserService= premiumUserService;
+            _premiumUserService = premiumUserService;
+            this.companyService = companyService;
+            this.companyWorkerService = companyWorkerService;
         }
 
         [Authorize]
@@ -415,6 +420,53 @@ namespace Task_Flow.WebAPI.Controllers
                 allowed= true,
             });
         }
+
+        [Authorize]
+        [HttpPost("NewCompanyRequestNotification")]
+        public async Task<IActionResult> NewCompanyRequestNotification(CompanyRequestDto dto)
+        {
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+            {
+                return Unauthorized(new { message = "user not found" });
+            }
+
+
+            var sender = await userService.GetUserById(userId);
+
+            foreach (var item in dto.UserIds)
+            {
+                var reciever = await _userManager.FindByIdAsync(item);
+                if (reciever == null)
+                {
+                    return BadRequest(new { message = "Receiver not found" });
+                }
+
+            var req = new RequestNotification
+            {
+                Text = "Company Worker Request",
+                SenderId = userId,
+                ReceiverId = item,
+                IsAccepted = false,
+                NotificationType = "CompanyWorkerRequest",
+            };
+
+            await requestNotificationService.Add(req);
+            //notification list
+            await _hub.Clients.User(item).SendAsync("RequestList2");
+            await _hub.Clients.User(item).SendAsync("RequestCount");
+            await _hub.Clients.User(item).SendAsync("RequestList");
+                mailService.SendEmail(reciever.Email, $"You have new Company Worker request from {sender.Firstname} {sender.Lastname} ");
+
+            }
+
+
+            return Ok(new
+            {
+                message = "Request sent successfully!",
+               
+            });
+        }
         [Authorize]
         [HttpDelete("DeleteRequestNotification/{requestId}")]
         public async Task<IActionResult> DeleteRequestNotification(int requestId)
@@ -477,6 +529,15 @@ namespace Task_Flow.WebAPI.Controllers
                 });
 
             await _hub.Clients.User(request.SenderId).SendAsync("UpdateMessageFriendList");
+            }
+            else if (request.NotificationType== "CompanyWorkerRequest")
+            {
+                var currentUser =await userService.GetUserById(userId);
+                //var sender=await userService.GetUserById(request.SenderId);
+                var company=await companyService.GetCompany(request.SenderId);
+                await companyWorkerService.AddWorkerToCompany(new CompanyWorker { Occupation=currentUser.Occupation, CompanyId=company.CompanyId,Role=1,UserId=userId});
+                currentUser.PlanType=PlanType.CompanyWorker;
+                //signalr
             }
 
             

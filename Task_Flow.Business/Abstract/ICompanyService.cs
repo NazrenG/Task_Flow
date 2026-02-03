@@ -13,6 +13,7 @@ namespace Task_Flow.Business.Abstract
     {
         Task CreateCompanyAsync (Company company);
         Task<CompanyDetailDto> GetCompany(string ownerId);
+        Task<List<CompanyProjectDto>> GetCompanyProjects(int companyId);
         Task AddWorkerToCompany(CompanyWorker worker,int companyId);
         Task  UserPaidForCompany(string ownerId);
         Task UpdateCompany(int id,string name,string email,string address);
