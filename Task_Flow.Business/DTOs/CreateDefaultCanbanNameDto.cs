@@ -10,7 +10,7 @@ namespace Task_Flow.Business.DTOs
     {
         public string Name { get; set; }
         public int Order { get; set; }
-        public int ProjectId { get; set; }
+        public int SprintId { get; set; }
         public string StatusKey { get; set; }
     }
 }

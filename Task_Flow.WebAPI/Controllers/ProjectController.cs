@@ -218,7 +218,7 @@ namespace Task_Flow.WebAPI.Controllers
                     CanbanColumnId = p.CanbanColumnId,
                     SprintId = p.SprintId,
                     ParticipantId = p.CreatedById,
-                    ParticipantPath = p.CreatedBy?.Image ?? "default-path.png",
+                    ParticipantPath = p.CreatedBy?.Image,
                     ParticipantName = p.CreatedBy != null
             ? $"{p.CreatedBy.Firstname} {p.CreatedBy.Lastname}"
             : "Unknown Participant",
@@ -246,6 +246,7 @@ namespace Task_Flow.WebAPI.Controllers
                 return BadRequest("You do not have permission to update tasks in this project.");
 
             task.CanbanColumnId = dto.NewCanbanColumnId;
+            task.Status = dto.Status;
 
             await _taskService.Update(task);
 
@@ -333,7 +334,7 @@ namespace Task_Flow.WebAPI.Controllers
 
         }
 
-        private async Task CreateDefaultKanbanColumns(int projectId)
+        private async Task CreateDefaultKanbanColumns(int sprintId)
         {
             var columns = new[]
             {
@@ -348,7 +349,7 @@ namespace Task_Flow.WebAPI.Controllers
                 await canbanColumnService.CreateDefaultCanbanName(
                     new CreateDefaultCanbanNameDto
                     {
-                        ProjectId = projectId,
+                        SprintId = sprintId,
                         Name = col.Name,
                         Order = order++,
                         StatusKey = col.StatusKey
@@ -403,7 +404,7 @@ namespace Task_Flow.WebAPI.Controllers
             };
             await _projectService.Add(item);
             //default canban name
-            await CreateDefaultKanbanColumns(item.Id);
+           // await CreateDefaultKanbanColumns(item.Id);
 
             await _projectActivity.Add(new ProjectActivity { UserId = userId, ProjectId = item.Id, Text = "created a new Project named: " + item.Title });
 

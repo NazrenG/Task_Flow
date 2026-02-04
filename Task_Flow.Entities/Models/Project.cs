@@ -19,6 +19,7 @@ namespace Task_Flow.Entities.Models
         public virtual CustomUser? CreatedBy { get; set; }
         public virtual List<Work>? TaskForUsers { get;set; }
         public virtual List<TeamMember>? TeamMembers { get; set; }
+        public virtual List<Sprint>? Sprints { get; set; }
 
         public Project()
         {
