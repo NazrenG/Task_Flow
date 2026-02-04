@@ -149,7 +149,7 @@ namespace Task_Flow.Entities.Data
                     .HasForeignKey<Company>(c => c.OwnerId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasQueryFilter(c => !c.IsDeleted);
+                //entity.HasQueryFilter(c => !c.IsDeleted);
             });
 
 

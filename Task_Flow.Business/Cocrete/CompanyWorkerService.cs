@@ -8,6 +8,7 @@ using Task_Flow.Business.Abstract;
 using Task_Flow.Business.DTOs;
 using Task_Flow.DataAccess.Abstract;
 using Task_Flow.DataAccess.Concrete;
+using Task_Flow.Entities.Enums;
 using Task_Flow.Entities.Models;
 
 namespace Task_Flow.Business.Cocrete
@@ -68,12 +69,52 @@ namespace Task_Flow.Business.Cocrete
           return new SearchedWorkerDto
           {
               Username = user.UserName,
-              Fullname = user.Firstname+" "+user.Lastname,
           };
       })
       .ToList();
 
             return result;
+        }
+
+        public async Task<List<string>> CompanyReopened(int companyId)
+        {
+            var workers = await _companyWorkerDal.GetAll(cw => cw.CompanyId == companyId);
+            if (!workers.Any())
+                return new List<string>();
+            foreach (var worker in workers)
+            {
+                worker.IsRemoved = false;
+                await _companyWorkerDal.Update(worker);
+            }
+            var userIds = workers.Select(w => w.UserId).Distinct().ToList();
+            var users = await _userDal.GetAll(u => userIds.Contains(u.Id));
+            foreach (var user in users)
+            {
+                user.PlanType = PlanType.CompanyWorker;
+                await _userDal.Update(user);
+            }
+            return userIds;
+        }
+
+        public async Task<List<string>> CompanyDeleted(int companyId)
+        {
+            var workers = await _companyWorkerDal.GetAll(cw => cw.CompanyId == companyId);
+            if (!workers.Any())
+                return new List<string>();
+            foreach (var worker in workers)
+            {
+                worker.IsRemoved = true;
+            await _companyWorkerDal.Update(worker);
+            }
+            var userIds = workers.Select(w => w.UserId).Distinct().ToList();
+
+            var users = await _userDal.GetAll(u => userIds.Contains(u.Id));
+            foreach (var user in users)
+            {
+                user.PlanType= 0;
+            await _userDal.Update(user);
+            }
+            return userIds;
         }
 
         public async Task<List<SelectedCompanyUserDto>> SelectedUsersForCompany(int companyId)
@@ -82,7 +123,7 @@ namespace Task_Flow.Business.Cocrete
             var firstlistUserIds=(await _companyWorkerDal.GetAll()).Select(u=>u.UserId);
             var company=await _companyDal.GetById(c=>c.Id==companyId);
             var usersNotInSecondList = (await _userDal.GetAll())
-            .Where(u => !firstlistUserIds.Contains(u.Id)&&u.Id!=company.OwnerId)
+            .Where(u => !firstlistUserIds.Contains(u.Id)&&u.Id!=company.OwnerId && u.PlanType!= PlanType.Business)
             .ToList();
 
             return  usersNotInSecondList.Select(u=>new SelectedCompanyUserDto { Fullname=u.Firstname+" "+u.Lastname,Username=u.UserName, Id=u.Id}).ToList();

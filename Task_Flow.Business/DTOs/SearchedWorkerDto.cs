@@ -9,7 +9,6 @@ namespace Task_Flow.Business.DTOs
     public class SearchedWorkerDto
     {
         public string Username { get; set; }
-        public string Fullname { get; set; }
 
     }
 }

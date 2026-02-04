@@ -16,7 +16,7 @@ namespace Task_Flow.Entities.Models
         public bool IsRemoved { get; set; }
         public GroupRole Role { get; set; }
         public DateTime JoinedAt { get; set; }
-
+        public bool IsDeleted { get; set; }
         public virtual CustomUser CustomUser { get; set; }
         public virtual GroupChat GroupChat { get; set; }
 

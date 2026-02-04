@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 using Task_Flow.Business.Abstract;
 using Task_Flow.Business.DTOs;
 using Task_Flow.DataAccess.Abstract;
 using Task_Flow.Entities.Models;
 using Task_Flow.WebAPI.Dtos;
+using Task_Flow.WebAPI.Hubs;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -18,11 +20,13 @@ namespace Task_Flow.WebAPI.Controllers
         private readonly ICompanyService _companyService;
         private readonly ICompanyWorkerService _companyWorkerService;
         private readonly IUserService _userService;
-        public CompanyController(ICompanyService companyService, ICompanyWorkerService companyWorkerService, IUserService userService)
+        private readonly IHubContext<ConnectionHub> _hub;
+        public CompanyController(ICompanyService companyService, ICompanyWorkerService companyWorkerService, IUserService userService,IHubContext<ConnectionHub>hub)
         {
             _companyService = companyService;
             _companyWorkerService = companyWorkerService;
             _userService = userService;
+            _hub = hub; 
         }
         // GET: api/<CompantController>
         //[HttpGet]
@@ -82,15 +86,16 @@ namespace Task_Flow.WebAPI.Controllers
 
         [HttpGet("SearchWorkerByKey")]
         public async Task<IActionResult> SearchWorkerByKey(
-    [FromQuery] string key,
-    [FromQuery] int companyId)
+    [FromQuery] string key)
         {
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
             if (string.IsNullOrWhiteSpace(key))
                 return BadRequest("Search key is required");
+            var company = await _companyService.GetCompany(userId);
+            var result = await _companyWorkerService.SearchWorkerByKey(key, company.CompanyId);
 
-            var result = await _companyWorkerService.SearchWorkerByKey(key, companyId);
-
-            return Ok(result);
+            return Ok(new {Users=result});
         }
 
 
@@ -126,6 +131,9 @@ namespace Task_Flow.WebAPI.Controllers
         {
             var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             await _companyService.UserPaidForCompany(userId);
+            var company = await _companyService.GetCompany(userId);
+           var userIds= await _companyWorkerService.CompanyReopened(company.CompanyId);
+            await _hub.Clients.Users(userIds).SendAsync("PlanDowngraded", 3);
             return Ok();
         }
 
@@ -134,6 +142,9 @@ namespace Task_Flow.WebAPI.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             await _companyService.DeleteCompany(id);
+            var userIds=await _companyWorkerService.CompanyDeleted(id);
+            await _hub.Clients.Users(userIds).SendAsync("PlanDowngraded", 0);
+
             return Ok();
         }
 

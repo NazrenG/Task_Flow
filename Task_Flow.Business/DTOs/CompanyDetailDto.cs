@@ -14,7 +14,8 @@ namespace Task_Flow.Business.DTOs
         public string OwnerFullname {  get; set; }
         public string Email {  get; set; }
         public string Address {  get; set; }
-        public bool İsPaid { get; set; }
+        public bool IsPaid { get; set; }
+        public bool IsDeleted { get; set; }
         public string CreatedDate {  get; set; }
         public int CompanyId { get; set; }
 

@@ -15,6 +15,7 @@ namespace Task_Flow.Entities.Models
         public DateTime CreatedAt { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
+        public bool IsDeleted {  get; set; } 
         public virtual CustomUser? CreatedBy { get; set; }
         public virtual Company? Company { get; set; }
         public virtual List<Work>? TaskForUsers { get;set; }

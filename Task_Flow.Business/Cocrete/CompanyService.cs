@@ -35,6 +35,7 @@ namespace Task_Flow.Business.Cocrete
         {
           var company=await _companyDal.GetById(c=>c.Id == id);
             company.IsDeleted = true;
+            (await _projectDal.GetAll(p => p.CompanyId == company.Id)).Select(p => p.IsDeleted = true);
             await _companyDal.Update(company);
         }
 
@@ -45,7 +46,8 @@ namespace Task_Flow.Business.Cocrete
             {
                 CompanyId = company.Id,
                 CompanyName = company.Name,
-                İsPaid = company.IsPaid,
+                IsPaid = company.IsPaid,
+                IsDeleted =company.IsDeleted,
                 Address = company.Address,
                 Email = company.Email,
                 CreatedDate = company.CreatedDate.ToShortTimeString(),
@@ -74,7 +76,8 @@ namespace Task_Flow.Business.Cocrete
         {
            var company =await _companyDal.GetById(c=>c.OwnerId == ownerId);
             company.IsPaid = true;
+            company.IsDeleted = false;
             await _companyDal.Update(company);
         }
-    }
+    } 
 }

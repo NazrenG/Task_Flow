@@ -537,6 +537,22 @@ namespace Task_Flow.WebAPI.Controllers
                 var company=await companyService.GetCompany(request.SenderId);
                 await companyWorkerService.AddWorkerToCompany(new CompanyWorker { Occupation=currentUser.Occupation, CompanyId=company.CompanyId,Role=1,UserId=userId});
                 currentUser.PlanType=PlanType.CompanyWorker;
+                //var sender =await userService.GetUserById(request.SenderId);
+                //mailService.SendEmail(sender.Email, );
+                await _hub.Clients.User(request.SenderId).SendAsync("UpdateUserActivity");
+                await _hub.Clients.User(userId).SendAsync("RequestList2");
+                await _hub.Clients.User(userId).SendAsync("RequestCount");
+                await _hub.Clients.User(userId).SendAsync("RequestList");
+                var item1 = new RecentActivity
+                {
+                    UserId = userId,
+                    Text = "Accept request",
+                    Type = "Notification",
+                };
+                await recentActivityService.Add(item1);
+                await _hub.Clients.User(userId).SendAsync("RecentActivityUpdate1");
+
+                return Ok(new { message = "accept request succesfuly", notificationType = request.NotificationType });
                 //signalr
             }
 
@@ -554,7 +570,7 @@ namespace Task_Flow.WebAPI.Controllers
             await recentActivityService.Add(item);
             await _hub.Clients.User(userId).SendAsync("RecentActivityUpdate1");
 
-            return Ok(new { message = "accept request succesfuly" });
+            return Ok(new { message = "accept request succesfuly" ,notificationType=request.NotificationType});
         }
        
 

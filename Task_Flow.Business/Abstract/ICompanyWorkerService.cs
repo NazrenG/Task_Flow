@@ -17,5 +17,7 @@ namespace Task_Flow.Business.Abstract
         Task AddWorkerToCompany(CompanyWorker companyWorker);
         Task<List<SelectedCompanyUserDto>> SelectedUsersForCompany(int companyId);
         Task<List<SearchedWorkerDto>> SearchWorkerByKey(string key, int companyId);
+        Task<List<string>> CompanyDeleted(int companyId);
+        Task<List<string>> CompanyReopened(int companyId);
     }
 }

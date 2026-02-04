@@ -191,5 +191,7 @@ namespace Task_Flow.Business.Cocrete
             group.Name = groupName;
             await _groupChatDal.Update(group);
         }
+
+        //public async Task ExitGroup(int groupId,int )
     }
 }

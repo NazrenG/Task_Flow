@@ -16,6 +16,7 @@ namespace Task_Flow.Entities.Models
         public string Occupation {  get; set; }
         public int Role {  get; set; }
         public bool IsDeleted { get; set; }
+        public bool IsRemoved { get; set; }
         public virtual Company Company { get; set; }
         public virtual CustomUser CustomUser { get; set; }
     
