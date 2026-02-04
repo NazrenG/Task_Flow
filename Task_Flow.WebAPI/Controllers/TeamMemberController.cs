@@ -28,8 +28,9 @@ namespace Task_Flow.WebAPI.Controllers
         private readonly  IRequestNotificationService _requestNotificationService;
         private readonly INotificationSettingService _notificationSettingService;
         private readonly IGitHubService _gitHubService;
-
-        public TeamMemberController(ITeamMemberService teamMemberService, IUserService userService, IProjectService projectService, IRequestNotificationService requestNotificationService, IHubContext<ConnectionHub> hub, INotificationSettingService notificationSettingService, MailService mailServicse, IGitHubService gitHubService)
+  private readonly IPremiumUserService _premiumUserService;
+       
+        public TeamMemberController(ITeamMemberService teamMemberService, IUserService userService, IProjectService projectService, IRequestNotificationService requestNotificationService, IHubContext<ConnectionHub> hub, INotificationSettingService notificationSettingService,MailService mailServicse,IPremiumUserService premiumUserService,IGitHubService gitHubService)
         {
             _userService = userService;
             _teamMemberService = teamMemberService;
@@ -38,6 +39,7 @@ namespace Task_Flow.WebAPI.Controllers
             _requestNotificationService = requestNotificationService;
             _hub = hub;
 
+                _premiumUserService = premiumUserService;
             _notificationSettingService = notificationSettingService;
             _gitHubService = gitHubService;
         }
@@ -160,6 +162,8 @@ namespace Task_Flow.WebAPI.Controllers
                 var sender = await _userService.GetUserById(senderId);
                 var list = await _teamMemberService.GetTaskMemberListById(dto.ProjectId);
                 await _teamMemberService.RemoveMembers(list);
+                var result = await _premiumUserService.IsUserAllowedToAddTeammember(list.Count, senderId);
+                if (!result.Allowed) return Ok(new { message = result.Message });
 
                 foreach (var username in dto.Members)
                 {
@@ -178,7 +182,7 @@ namespace Task_Flow.WebAPI.Controllers
                     //};
                     var request = new RequestNotification
                     {
-                        IsAccepted = false,
+                        IsAccepted = false, 
                         ReceiverId = user.Id,
                         SenderId = senderId,
                         NotificationType = "ProjectRequest",

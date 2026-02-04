@@ -8,6 +8,7 @@ using System.Security.Claims;
 using System.Text;
 using Task_Flow.DataAccess.Abstract;
 using Task_Flow.DataAccess.Concrete;
+using Task_Flow.Entities.Enums;
 using Task_Flow.Entities.Models;
 using Task_Flow.WebAPI.Dtos;
 using Task_Flow.WebAPI.Hubs;
@@ -37,11 +38,11 @@ namespace Task_Flow.WebAPI.Controllers
 
         [Authorize]
         [HttpPost("searchedUser")]
-        public async Task<IActionResult>SearchUser([FromBody] string key)
+        public async Task<IActionResult>SearchUser([FromBody] SearchedUserDto dto)
         {
             var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            var users = await _userService.GetUserByName(key);
+            var users = await _userService.GetUserByName(dto.Key);
            var sort=users.Where(u=>u.Id!=userId).ToList();  
 
             return Ok(new {Users=sort});
@@ -109,7 +110,7 @@ namespace Task_Flow.WebAPI.Controllers
                 }
              //   await _context.Clients.User(user.Id).SendAsync("TotalClientsUpdated");
               //  await _context.Clients.User(user.Id).SendAsync("RecentActivityUpdate");
-                return Ok(new { Token = new JwtSecurityTokenHandler().WriteToken(token), Expiration = token.ValidTo });
+                return Ok(new { Token = new JwtSecurityTokenHandler().WriteToken(token), Expiration = token.ValidTo,PlanType=user.PlanType });
             }
 
             return Unauthorized();
@@ -155,6 +156,7 @@ namespace Task_Flow.WebAPI.Controllers
                 Birthday = user.Birthday,
                 Email = user.Email,
                 Image = user.Image,
+                PlanType = user.PlanType ,
                 Occupation = user.Occupation,
 
             });

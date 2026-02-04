@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Task_Flow.Entities.Enums;
 using Task_Flow.Entities.Models;
 
 namespace Task_Flow.Entities.Data
@@ -125,8 +126,48 @@ namespace Task_Flow.Entities.Data
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
+            modelBuilder.Entity<Company>(entity => {
+                entity.HasOne(c => c.Owner)
+                    .WithOne(u => u.Company)
+                    .HasForeignKey<Company>(c=>c.OwnerId);
+            });
+
+            modelBuilder.Entity<CompanyWorker>(entity => {
+                entity.HasOne(c => c.CustomUser)
+                .WithMany().HasForeignKey(m=>m.UserId);
+            });
+
+            modelBuilder.Entity<CompanyWorker>(entity =>
+            {
+                entity.HasOne(c => c.Company).WithMany(c=>c.Workers).HasForeignKey(m=>m.CompanyId);
+              
+            });
+            modelBuilder.Entity<Company>(entity =>
+            {
+                entity.HasOne(c => c.Owner)
+                    .WithOne(u => u.Company)
+                    .HasForeignKey<Company>(c => c.OwnerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                //entity.HasQueryFilter(c => !c.IsDeleted);
+            });
 
 
+            modelBuilder.Entity<CompanyWorker>(entity =>
+            {
+                entity.HasOne(cw => cw.CustomUser)
+                    .WithMany(u => u.CompanyWorkers)
+                    .HasForeignKey(cw => cw.UserId)
+                    .OnDelete(DeleteBehavior.Restrict); 
+
+                entity.HasOne(cw => cw.Company)
+                    .WithMany(c => c.Workers)
+                    .HasForeignKey(cw => cw.CompanyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasQueryFilter(cw => !cw.IsDeleted);
+            });
+           
 
             base.OnModelCreating(modelBuilder);
         }
@@ -148,6 +189,8 @@ namespace Task_Flow.Entities.Data
         public virtual DbSet<NotificationSetting> NotificationSettings { get; set; }
         public virtual DbSet<RecentActivity> RecentActivities { get; set; }
         public virtual DbSet<ProjectActivity>ProjectActivities { get; set; }
+        public virtual DbSet<Company> Companies{ get; set; }
+        public virtual DbSet<CompanyWorker>CompanyWorkers { get; set; }
         public virtual DbSet<UserTask> UserTasks { get; set; }
         public virtual DbSet<GroupChat> GroupChats { get; set; }
         public virtual DbSet<GroupChatMessage> GroupChatMessages { get; set; }

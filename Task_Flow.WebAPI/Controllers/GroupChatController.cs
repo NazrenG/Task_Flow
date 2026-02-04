@@ -127,12 +127,15 @@ namespace Task_Flow.WebAPI.Controllers
                     ProfileImage = user.Image != null ? user.Image : " ",
                 });
             }
+            var userId=HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var dto = new GroupChatDetailsDto
             { 
                 GroupName = group.Name,
                 CreatedDate = group.CreatedDate.ToString(),
                 GroupChatMembers = membersDto,
+            IsCurrentuserAdmin=await _groupChatService.IsGroupAdminAsync(userId,id),
             };
+
             
             return Ok(dto);
         }

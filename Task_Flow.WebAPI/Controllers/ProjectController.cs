@@ -32,9 +32,11 @@ namespace Task_Flow.WebAPI.Controllers
         private readonly IRequestNotificationService _requestNotificationService;
         private readonly Business.Cocrete.MailService mailService;
         private readonly ICanbanColumnService canbanColumnService;
+        private readonly IPremiumUserService _premiumUserService;
+        private readonly ICompanyService _companyService;
 
         private IGitHubService _gitHubService;
-        public ProjectController(IProjectService projectService, TaskFlowDbContext context, IUserService userService, ITaskService taskService, ITeamMemberService teamMemberService, IProjectActivityService projectActivity, IHubContext<ConnectionHub> hub, IRequestNotificationService requestNotificationService, Business.Cocrete.MailService mailService, ICanbanColumnService canbanColumnService, IGitHubService gitHubService)
+        public ProjectController(IProjectService projectService, TaskFlowDbContext context, IUserService userService, ITaskService taskService, ITeamMemberService teamMemberService, IProjectActivityService projectActivity, IHubContext<ConnectionHub> hub, IRequestNotificationService requestNotificationService, Business.Cocrete.MailService mailService, ICanbanColumnService canbanColumnService, IGitHubService gitHubService,IPremiumUserService premiumUserService)
         {
             _projectService = projectService;
             _context = context;
@@ -47,6 +49,8 @@ namespace Task_Flow.WebAPI.Controllers
             this.mailService = mailService;
             this.canbanColumnService = canbanColumnService;
             _gitHubService = gitHubService;
+            _premiumUserService = premiumUserService;
+            _companyService = companyService;
         }
 
         [HttpGet("ProjectTitle/{projectId}")]
@@ -164,7 +168,7 @@ namespace Task_Flow.WebAPI.Controllers
                 StartDate = item.StartDate,
                 EndDate = item.EndDate,
                 Status = item.Status,
-
+                IsCompanyProject=item.CompanyId!=0?true:false,
             };
 
             var teamMembers = await _teamMemberService.GetTaskMemberListById(id);
@@ -402,6 +406,12 @@ namespace Task_Flow.WebAPI.Controllers
                 GitHubRepositoryName=value.GitHubRepositoryName,
                 GitHubRepositoryUrl=value.GitHubRepositoryUrl
             };
+            if (value.IsCompanyProject) {
+                var company = await _companyService.GetCompany(userId);
+                item.CompanyId=company.CompanyId;
+            }
+            var result = await _premiumUserService.IsUserAllowedToCreateProjectAsync(userId, item);
+            if (!result.Allowed) { return Ok(new { message = result.Message, allowed = false }); }
             await _projectService.Add(item);
             //default canban name
            // await CreateDefaultKanbanColumns(item.Id);
@@ -411,18 +421,19 @@ namespace Task_Flow.WebAPI.Controllers
             await NotifyUser(userId, value.Status);
 
 
-            ////var count=await _projectService.
-            ////await _hub.Clients.All.SendAsync("ProjectCountUpdate");
-            //await _hub.Clients.User(userId).SendAsync("ReceiveProjectUpdate");
-            //await _hub.Clients.User(userId).SendAsync("RecieveInProgressUpdate");
-            //await _hub.Clients.User(userId).SendAsync("UpdateTotalProjects");//s
-            //if (value.Status == "On Going")
-            //    await _hub.Clients.User(userId).SendAsync("UpdateOnGoingProjects");
-            //else if (value.Status == "Pending")
-            //    await _hub.Clients.User(userId).SendAsync("UpdatePendingProjects");
-            //else if (value.Status == "Completed")
-            //    await _hub.Clients.User(userId).SendAsync("UpdateCompletedProjects");
-            return Ok(item);
+            await _projectActivity.Add(new ProjectActivity { UserId = userId, ProjectId = item.Id, Text = "created a new Project named: " + item.Title });
+            //var count=await _projectService.
+            //await _hub.Clients.All.SendAsync("ProjectCountUpdate");
+            await _hub.Clients.User(userId).SendAsync("ReceiveProjectUpdate");
+            await _hub.Clients.User(userId).SendAsync("RecieveInProgressUpdate");
+            await _hub.Clients.User(userId).SendAsync("UpdateTotalProjects");//s
+            if (value.Status == "On Going")
+                await _hub.Clients.User(userId).SendAsync("UpdateOnGoingProjects");
+            else if (value.Status == "Pending")
+                await _hub.Clients.User(userId).SendAsync("UpdatePendingProjects");
+            else if (value.Status == "Completed")
+                await _hub.Clients.User(userId).SendAsync("UpdateCompletedProjects");
+            return Ok(new {item=item,allowed=true});
         }
 
         [Authorize]

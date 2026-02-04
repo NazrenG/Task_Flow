@@ -6,6 +6,7 @@ namespace Task_Flow.WebAPI.Dtos
     {
         public string GroupName { get; set; }
         public string CreatedDate { get; set; }
+        public bool IsCurrentuserAdmin { get; set; }
         public List<GroupChatMemberDetailDto>GroupChatMembers { get; set; }
     }
 }

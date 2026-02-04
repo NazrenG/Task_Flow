@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Task_Flow.Entities.Data;
 
@@ -11,9 +12,11 @@ using Task_Flow.Entities.Data;
 namespace Task_Flow.Entities.Migrations
 {
     [DbContext(typeof(TaskFlowDbContext))]
-    partial class TaskFlowDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260204180100_ChatMemberUpdated")]
+    partial class ChatMemberUpdated
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -173,7 +176,7 @@ namespace Task_Flow.Entities.Migrations
                     b.Property<int>("Order")
                         .HasColumnType("int");
 
-                    b.Property<int>("SprintId")
+                    b.Property<int>("ProjectId")
                         .HasColumnType("int");
 
                     b.Property<string>("StatusKey")
@@ -182,7 +185,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SprintId");
+                    b.HasIndex("ProjectId");
 
                     b.ToTable("CanbanColumns");
                 });
@@ -395,12 +398,6 @@ namespace Task_Flow.Entities.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Gender")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("GitHubAccessToken")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("GitHubUsername")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Image")
@@ -723,12 +720,6 @@ namespace Task_Flow.Entities.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("GitHubRepositoryName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("GitHubRepositoryUrl")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("IsCompleted")
                         .HasColumnType("bit");
 
@@ -962,9 +953,6 @@ namespace Task_Flow.Entities.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("GitHubAccessGranted")
-                        .HasColumnType("bit");
-
                     b.Property<int>("ProjectId")
                         .HasColumnType("int");
 
@@ -1046,9 +1034,6 @@ namespace Task_Flow.Entities.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("GitHubBranchName")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
@@ -1138,13 +1123,13 @@ namespace Task_Flow.Entities.Migrations
 
             modelBuilder.Entity("Task_Flow.Entities.Models.CanbanColumn", b =>
                 {
-                    b.HasOne("Task_Flow.Entities.Models.Sprint", "Sprint")
-                        .WithMany("CanbanColumns")
-                        .HasForeignKey("SprintId")
+                    b.HasOne("Task_Flow.Entities.Models.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Sprint");
+                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.Chat", b =>
@@ -1372,7 +1357,7 @@ namespace Task_Flow.Entities.Migrations
             modelBuilder.Entity("Task_Flow.Entities.Models.Sprint", b =>
                 {
                     b.HasOne("Task_Flow.Entities.Models.Project", "Project")
-                        .WithMany("Sprints")
+                        .WithMany()
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1534,8 +1519,6 @@ namespace Task_Flow.Entities.Migrations
 
             modelBuilder.Entity("Task_Flow.Entities.Models.Project", b =>
                 {
-                    b.Navigation("Sprints");
-
                     b.Navigation("TaskForUsers");
 
                     b.Navigation("TeamMembers");
@@ -1543,8 +1526,6 @@ namespace Task_Flow.Entities.Migrations
 
             modelBuilder.Entity("Task_Flow.Entities.Models.Sprint", b =>
                 {
-                    b.Navigation("CanbanColumns");
-
                     b.Navigation("Works");
                 });
 
