@@ -32,11 +32,11 @@ namespace Task_Flow.WebAPI.Controllers
             return Ok();
         }
 
-        [HttpGet("AllCanbanNames/{projectId}")]
+        [HttpGet("AllCanbanNames/{sprintId}")]
 
-        public async Task<IActionResult> AllCanbanNames(int projectId)
+        public async Task<IActionResult> AllCanbanNames(int sprintId)
         {
-            var list = await canbanColumnService.GetAllCanbanColumn(projectId);
+            var list = await canbanColumnService.GetAllCanbanColumn(sprintId);
             return Ok(list);
         }
 

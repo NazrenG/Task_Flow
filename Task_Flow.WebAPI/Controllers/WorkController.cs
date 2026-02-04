@@ -32,8 +32,9 @@ namespace Task_Flow.WebAPI.Controllers
         private readonly IProjectActivityService _projectActivityService;
         private readonly IRequestNotificationService _requestNotificationService;
         private readonly INotificationSettingService _notificationSettingService;
+        private readonly IGitHubService _gitHubService;
 
-        public WorkController(ITaskService taskService, IUserService userService, UserManager<CustomUser> userManager, IProjectService projectService, MailService mailService, INotificationService notificationService, IHubContext<ConnectionHub> context, TaskFlowDbContext dbContext, IProjectActivityService projectActivityService, IRequestNotificationService requestNotificationService, INotificationSettingService notificationSettingService)
+        public WorkController(ITaskService taskService, IUserService userService, UserManager<CustomUser> userManager, IProjectService projectService, MailService mailService, INotificationService notificationService, IHubContext<ConnectionHub> context, TaskFlowDbContext dbContext, IProjectActivityService projectActivityService, IRequestNotificationService requestNotificationService, INotificationSettingService notificationSettingService, IGitHubService gitHubService)
         {
             this.taskService = taskService;
             this.userService = userService;
@@ -46,6 +47,7 @@ namespace Task_Flow.WebAPI.Controllers
             _projectActivityService = projectActivityService;
             _requestNotificationService = requestNotificationService;
             _notificationSettingService = notificationSettingService;
+           _gitHubService = gitHubService;
         }
 
 
@@ -142,9 +144,55 @@ namespace Task_Flow.WebAPI.Controllers
                 ProjectName = item.Project?.Title,
                 StartDate = item.StartTime,
                 Color = item.Color,
-                CanbanColumnId=item.CanbanColumnId
+                CanbanColumnId = item.CanbanColumnId,
+
             };
             return Ok(work);
+        }
+
+        [Authorize]
+        [HttpGet("FullWorkDetail/{id}")]
+        public async Task<IActionResult> GetFullWorkData(int id)
+        {
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+            {
+                return BadRequest(new { message = "User not authenticated." });
+            }
+            var item = await taskService.GetTaskById(id);
+            var project=await projectService.GetProjectById(item.ProjectId);
+            var createdBy = await userService.GetUserById(item.CreatedById);
+            if (item == null)
+            {
+                return NotFound();
+            }
+            return Ok(new
+            {
+                Description = item.Description,
+                Deadline = item.Deadline,
+                Priority = item.Priority,
+                Status = item.Status,
+                Title = item.Title,
+                StartDate = item.StartTime,
+                Color = item.Color,
+                CanbanColumnId = item.CanbanColumnId,
+                gitHubBranchName = item.GitHubBranchName, // Branch adı
+                project = new
+                {
+                    id =item.ProjectId,
+                    title =project.Title,
+                    gitHubRepositoryUrl = project.GitHubRepositoryUrl, // Repo URL
+                    gitHubRepositoryName = project.GitHubRepositoryName
+                },
+                createdBy = new
+                {
+                    id = createdBy.Id,
+                    username = createdBy.UserName,
+                    firstname = createdBy.Firstname,
+                    lastname = createdBy.Lastname
+                }
+
+            });
         }
 
         //// PUT api/<WorkController>/5
@@ -318,10 +366,30 @@ namespace Task_Flow.WebAPI.Controllers
                 return BadRequest(new { message = "User not authenticated." });
             }
             var member = await userService.GetUserById(value.CreatedById);
-            var project = await projectService.GetProjectNameById(value.ProjectId);
+            var project = await projectService.GetProjectById(value.ProjectId);
+            var projectName = await projectService.GetProjectNameById(value.ProjectId);
+            if (project == null) return NotFound("Project not found");
             var projectCreater = await projectService.GetProjectById(value.ProjectId);
 
-          //  if (projectCreater.CreatedById != userId) return BadRequest("You do not have permission to update tasks in this project.");
+
+
+            if (member == null || string.IsNullOrEmpty(member.GitHubAccessToken))
+                return BadRequest("İstifadəçi GitHub hesabını qoşmalıdır");
+
+            // Generate branch name from task title
+            var branchName = $"task/{value.Title.ToLower().Replace(" ", "-")}";
+
+            // Create branch using ASSIGNED USER's token (onlar öz branch-larını yaradır)
+            var branchCreated = await _gitHubService.CreateBranch(
+                member.GitHubAccessToken,
+                project.CreatedBy.GitHubUsername,
+                project.GitHubRepositoryName,
+                branchName
+            );
+
+            if (!branchCreated)
+                return StatusCode(500, "Branch yaradıla bilmədi");
+            //  if (projectCreater.CreatedById != userId) return BadRequest("You do not have permission to update tasks in this project.");
             var item = new Work
             {
                 CreatedById = value.CreatedById,
@@ -333,6 +401,7 @@ namespace Task_Flow.WebAPI.Controllers
                 Color = value.Color,
                 ProjectId = value.ProjectId,
                 CanbanColumnId = value.CanbanColumnId,
+                GitHubBranchName=branchName,
                 SprintId=value.SprintId,
             };
             await taskService.Add(item);
@@ -375,7 +444,7 @@ namespace Task_Flow.WebAPI.Controllers
                 Text = $"You have a new task({value.Title}) in the project named {projectCreater.Title}",
                 IsAccepted = false,
                 NotificationType = "ProjectRequest",
-                ProjectName = project
+                ProjectName = projectName
 
             });
             //notification list project taski ucun 

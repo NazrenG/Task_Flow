@@ -14,6 +14,9 @@ using Task_Flow.WebAPI.Hubs;
 using Task_Flow.WebAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.Configure<GitHubSettings>(
+    builder.Configuration.GetSection("GitHub")
+    );
 
 
 //stripe
@@ -21,6 +24,7 @@ StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -100,6 +104,8 @@ builder.Services.AddScoped<ICompanyService, CompanyService>();
 builder.Services.AddScoped<ICompanyWorkerDal, CompanyWorkerDal>();
 builder.Services.AddScoped<ICompanyWorkerService, CompanyWorkerService>();
 builder.Services.AddScoped<IWorkDal, WorkDal>();
+builder.Services.AddHttpClient<IGitHubService,GitHubService>();
+builder.Services.AddScoped<IGitHubService, GitHubService>();
 
 
 // Identity configuration (only user management, no roles)
@@ -151,7 +157,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+
 
 app.UseCors(x =>
 {
@@ -162,7 +168,7 @@ app.UseCors(x =>
 });
 
 
-
+app.UseHttpsRedirection();
 app.UseRouting(); 
 app.UseAuthentication();
 app.UseAuthorization();

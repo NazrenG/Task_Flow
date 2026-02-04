@@ -14,11 +14,13 @@ namespace Task_Flow.Business.Cocrete
     {
         private readonly ISprintDal splitDal;
         private readonly ITaskDal taskDal;
+        private readonly ICanbanColumnDal canbanColumnDal;
 
-        public SprintService(ISprintDal splitDal, ITaskDal taskDal)
+        public SprintService(ISprintDal splitDal, ITaskDal taskDal, ICanbanColumnDal canbanColumnDal)
         {
             this.splitDal = splitDal;
             this.taskDal = taskDal;
+            this.canbanColumnDal = canbanColumnDal;
         }
 
         public async Task AddBacklogToSplit(int workId, int splitId)
@@ -58,17 +60,23 @@ namespace Task_Flow.Business.Cocrete
         public async Task<Sprint> UpdateTaskSplit(UpdateSprintDto updateSprintDto)
         {
             var task = await taskDal.GetById(t => t.Id == updateSprintDto.TaskId);
-            var split = await splitDal.GetSprintById(updateSprintDto.SprintId);
+            var sprint = await splitDal.GetSprintById(updateSprintDto.SprintId);
 
-          
+
+
 
             //project kanban elaqesine gore deafult to do ya elave et , sonradan deyis sprint colummn elaqesine gore
 
+            var canbanColumn = await canbanColumnDal.GetById(s => s.SprintId == sprint.Id && s.StatusKey == "to do");
+            task.CanbanColumnId =canbanColumn.Id;
 
 
-            split.Works.Add(task);
-            await splitDal.Update(split);
-            return (split);
+
+            await taskDal.Update(task);
+
+            sprint.Works.Add(task);
+            await splitDal.Update(sprint);
+            return (sprint);
         }
     }
 }

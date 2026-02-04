@@ -13,6 +13,9 @@ namespace Task_Flow.Entities.Models
         public string? City { get; set; }
         public string? Image { get; set; }
         public string? Gender { get; set; }
+        public string? GitHubAccessToken { get; set; }
+        public string? GitHubUsername { get; set; }
+
         public bool? IsOnline { get; set; }
         public DateTime? Birthday { get; set; }
         public DateTime? RegisterDate { get; set; }

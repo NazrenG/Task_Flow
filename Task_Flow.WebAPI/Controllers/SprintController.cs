@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.SignalR;
 using Newtonsoft.Json.Linq;
 using System.Security.Claims;
 using Task_Flow.Business.Abstract;
+using Task_Flow.Business.Cocrete;
 using Task_Flow.Business.DTOs;
 using Task_Flow.Entities.Models;
 using Task_Flow.WebAPI.Hubs;
@@ -16,12 +17,43 @@ namespace Task_Flow.WebAPI.Controllers
     public class SprintController : ControllerBase
     {
         private readonly ISprintService spritService;
+        private readonly ICanbanColumnService canbanColumnService;
         private readonly IHubContext<ConnectionHub> _context;
 
-        public SprintController(ISprintService spritService, IHubContext<ConnectionHub> context)
+        public SprintController(ISprintService spritService, IHubContext<ConnectionHub> context, ICanbanColumnService canbanColumnService)
         {
             this.spritService = spritService;
             _context = context;
+            this.canbanColumnService = canbanColumnService;
+        }
+
+        [HttpGet("ProjectSprints/{projectId}")]
+        public async Task<IActionResult> GetProjectSprints(int projectId)
+        {
+            var sprints = await spritService.GetSprints(projectId);
+            return Ok(sprints.Select(s => new { s.Id, s.Name }));
+        }
+        private async Task CreateDefaultKanbanColumns(int sprintId)
+        {
+            var columns = new[]
+            {
+        new { Name = "To Do", StatusKey = "to do" },
+        new { Name = "Progress", StatusKey = "progress" },
+        new { Name = "Done", StatusKey = "done" }
+    };
+
+            int order = 1;
+            foreach (var col in columns)
+            {
+                await canbanColumnService.CreateDefaultCanbanName(
+                    new CreateDefaultCanbanNameDto
+                    {
+                        SprintId = sprintId,
+                        Name = col.Name,
+                        Order = order++,
+                        StatusKey = col.StatusKey
+                    });
+            }
         }
 
         [Authorize]
@@ -30,9 +62,12 @@ namespace Task_Flow.WebAPI.Controllers
         {
             var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            await spritService.Create(projectId, splitDto);
+          var sprint=  await spritService.Create(projectId, splitDto);
             //backlog
             await _context.Clients.User(userId).SendAsync("UpdateSprints");
+
+            //default cNBn nAME
+            await CreateDefaultKanbanColumns(sprint.Id);
             return Ok();
 
         }

@@ -14,6 +14,7 @@ namespace Task_Flow.Entities.Models
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public List<Work> Works { get; set; }
+    public List<CanbanColumn> CanbanColumns { get; set; }
     public bool IsOpen { get; set; }
     public int ProjectId { get; set; }
     public Project Project { get; set; }
