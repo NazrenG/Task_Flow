@@ -36,7 +36,7 @@ namespace Task_Flow.WebAPI.Controllers
         private readonly ICompanyService _companyService;
 
         private IGitHubService _gitHubService;
-        public ProjectController(IProjectService projectService, TaskFlowDbContext context, IUserService userService, ITaskService taskService, ITeamMemberService teamMemberService, IProjectActivityService projectActivity, IHubContext<ConnectionHub> hub, IRequestNotificationService requestNotificationService, Business.Cocrete.MailService mailService, ICanbanColumnService canbanColumnService, IGitHubService gitHubService,IPremiumUserService premiumUserService)
+        public ProjectController(IProjectService projectService, TaskFlowDbContext context, IUserService userService, ITaskService taskService, ITeamMemberService teamMemberService, IProjectActivityService projectActivity, IHubContext<ConnectionHub> hub, IRequestNotificationService requestNotificationService, Business.Cocrete.MailService mailService, ICanbanColumnService canbanColumnService, IGitHubService gitHubService, IPremiumUserService premiumUserService, ICompanyService companyService)
         {
             _projectService = projectService;
             _context = context;
