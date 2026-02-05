@@ -184,7 +184,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasIndex("ProjectId");
 
-                    b.ToTable("CanbanColumns");
+                    b.ToTable("CanbanColumns", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.Chat", b =>
@@ -205,7 +205,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasIndex("ReceiverId");
 
-                    b.ToTable("Chats");
+                    b.ToTable("Chats", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.ChatMessage", b =>
@@ -247,7 +247,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("ChatMessages");
+                    b.ToTable("ChatMessages", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.Comment", b =>
@@ -276,7 +276,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Comments");
+                    b.ToTable("Comments", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.Company", b =>
@@ -317,7 +317,7 @@ namespace Task_Flow.Entities.Migrations
                     b.HasIndex("OwnerId")
                         .IsUnique();
 
-                    b.ToTable("Companies");
+                    b.ToTable("Companies", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.CompanyWorker", b =>
@@ -357,7 +357,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("CompanyWorkers");
+                    b.ToTable("CompanyWorkers", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.CustomUser", b =>
@@ -493,7 +493,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Friends");
+                    b.ToTable("Friends", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.GroupChat", b =>
@@ -523,7 +523,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("GroupChats");
+                    b.ToTable("GroupChats", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.GroupChatMembers", b =>
@@ -559,7 +559,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("GroupChatMembers");
+                    b.ToTable("GroupChatMembers", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.GroupChatMessage", b =>
@@ -597,7 +597,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("GroupChatMessages");
+                    b.ToTable("GroupChatMessages", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.Message", b =>
@@ -626,7 +626,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("Messages");
+                    b.ToTable("Messages", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.Notification", b =>
@@ -653,7 +653,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications");
+                    b.ToTable("Notifications", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.NotificationSetting", b =>
@@ -688,7 +688,7 @@ namespace Task_Flow.Entities.Migrations
                         .IsUnique()
                         .HasFilter("[UserId] IS NOT NULL");
 
-                    b.ToTable("NotificationSettings");
+                    b.ToTable("NotificationSettings", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.Project", b =>
@@ -738,7 +738,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("Projects");
+                    b.ToTable("Projects", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.ProjectActivity", b =>
@@ -769,7 +769,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ProjectActivities");
+                    b.ToTable("ProjectActivities", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.Quiz", b =>
@@ -791,7 +791,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Quizzes");
+                    b.ToTable("Quizzes", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.RecentActivity", b =>
@@ -818,7 +818,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RecentActivities");
+                    b.ToTable("RecentActivities", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.RequestNotification", b =>
@@ -857,7 +857,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("RequestNotifications");
+                    b.ToTable("RequestNotifications", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.Sprint", b =>
@@ -888,7 +888,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasIndex("ProjectId");
 
-                    b.ToTable("Sprints");
+                    b.ToTable("Sprints", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.TaskAssigne", b =>
@@ -915,7 +915,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("TaskAssignes");
+                    b.ToTable("TaskAssignes", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.TaskCustomize", b =>
@@ -939,7 +939,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasIndex("TaskId");
 
-                    b.ToTable("TaskCustomizes");
+                    b.ToTable("TaskCustomizes", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.TeamMember", b =>
@@ -965,7 +965,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("TeamMembers");
+                    b.ToTable("TeamMembers", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.UserTask", b =>
@@ -1007,7 +1007,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("UserTasks");
+                    b.ToTable("UserTasks", (string)null);
                 });
 
             modelBuilder.Entity("Task_Flow.Entities.Models.Work", b =>
@@ -1064,7 +1064,7 @@ namespace Task_Flow.Entities.Migrations
 
                     b.HasIndex("SprintId");
 
-                    b.ToTable("Works");
+                    b.ToTable("Works", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
