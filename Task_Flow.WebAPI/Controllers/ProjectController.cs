@@ -35,8 +35,8 @@ namespace Task_Flow.WebAPI.Controllers
         private readonly IPremiumUserService _premiumUserService;
         private readonly ICompanyService _companyService;
 
-
-        public ProjectController(IProjectService projectService, TaskFlowDbContext context, IUserService userService, ITaskService taskService, ITeamMemberService teamMemberService, IProjectActivityService projectActivity, IHubContext<ConnectionHub> hub, IRequestNotificationService requestNotificationService, Business.Cocrete.MailService mailService, ICanbanColumnService canbanColumnService, IPremiumUserService premiumUserService, ICompanyService companyService)
+        private IGitHubService _gitHubService;
+        public ProjectController(IProjectService projectService, TaskFlowDbContext context, IUserService userService, ITaskService taskService, ITeamMemberService teamMemberService, IProjectActivityService projectActivity, IHubContext<ConnectionHub> hub, IRequestNotificationService requestNotificationService, Business.Cocrete.MailService mailService, ICanbanColumnService canbanColumnService, IGitHubService gitHubService,IPremiumUserService premiumUserService)
         {
             _projectService = projectService;
             _context = context;
@@ -48,6 +48,7 @@ namespace Task_Flow.WebAPI.Controllers
             _requestNotificationService = requestNotificationService;
             this.mailService = mailService;
             this.canbanColumnService = canbanColumnService;
+            _gitHubService = gitHubService;
             _premiumUserService = premiumUserService;
             _companyService = companyService;
         }
@@ -221,7 +222,7 @@ namespace Task_Flow.WebAPI.Controllers
                     CanbanColumnId = p.CanbanColumnId,
                     SprintId = p.SprintId,
                     ParticipantId = p.CreatedById,
-                    ParticipantPath = p.CreatedBy?.Image ?? "default-path.png",
+                    ParticipantPath = p.CreatedBy?.Image,
                     ParticipantName = p.CreatedBy != null
             ? $"{p.CreatedBy.Firstname} {p.CreatedBy.Lastname}"
             : "Unknown Participant",
@@ -249,6 +250,7 @@ namespace Task_Flow.WebAPI.Controllers
                 return BadRequest("You do not have permission to update tasks in this project.");
 
             task.CanbanColumnId = dto.NewCanbanColumnId;
+            task.Status = dto.Status;
 
             await _taskService.Update(task);
 
@@ -336,7 +338,7 @@ namespace Task_Flow.WebAPI.Controllers
 
         }
 
-        private async Task CreateDefaultKanbanColumns(int projectId)
+        private async Task CreateDefaultKanbanColumns(int sprintId)
         {
             var columns = new[]
             {
@@ -351,7 +353,7 @@ namespace Task_Flow.WebAPI.Controllers
                 await canbanColumnService.CreateDefaultCanbanName(
                     new CreateDefaultCanbanNameDto
                     {
-                        ProjectId = projectId,
+                        SprintId = sprintId,
                         Name = col.Name,
                         Order = order++,
                         StatusKey = col.StatusKey
@@ -380,10 +382,15 @@ namespace Task_Flow.WebAPI.Controllers
         // POST api/<ProjectController>
         [Authorize]///Sevgi
         [HttpPost]///Sevgi
-        public async Task<IActionResult> Post([FromBody] ProjectDto value)
+        public async Task<IActionResult> Post([FromBody] CreateProjectDto value)
         {
             var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
+            var user=await _userService.GetUserById(userId);
+            var repoUrl = await _gitHubService.CreateRepository(
+          user.GitHubAccessToken,
+          value.Title,
+          value.Description
+      );
 
             var item = new Project
             {
@@ -396,6 +403,8 @@ namespace Task_Flow.WebAPI.Controllers
                 IsCompleted = value.IsCompleted,
                 Title = value.Title,
                 Color = value.Color,
+                GitHubRepositoryName=value.GitHubRepositoryName,
+                GitHubRepositoryUrl=value.GitHubRepositoryUrl
             };
             if (value.IsCompanyProject) {
                 var company = await _companyService.GetCompany(userId);
@@ -405,7 +414,7 @@ namespace Task_Flow.WebAPI.Controllers
             if (!result.Allowed) { return Ok(new { message = result.Message, allowed = false }); }
             await _projectService.Add(item);
             //default canban name
-            await CreateDefaultKanbanColumns(item.Id);
+           // await CreateDefaultKanbanColumns(item.Id);
 
             await _projectActivity.Add(new ProjectActivity { UserId = userId, ProjectId = item.Id, Text = "created a new Project named: " + item.Title });
 

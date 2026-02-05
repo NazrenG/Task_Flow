@@ -19,9 +19,9 @@ namespace Task_Flow.DataAccess.Concrete
             taskFlowDbContext = context;
         }
 
-        public async Task<List<CanbanColumn>> GetAllColumn(int projectId)
+        public async Task<List<CanbanColumn>> GetAllColumn(int sprintId)
         {
-            return await taskFlowDbContext.CanbanColumns.Where(c => c.ProjectId == projectId).Include(w => w.TaskForUsers).OrderBy(c => c.Order).ToListAsync();
+            return await taskFlowDbContext.CanbanColumns.Where(c => c.SprintId == sprintId).Include(w => w.TaskForUsers).OrderBy(c => c.Order).ToListAsync();
         }
     }
 }

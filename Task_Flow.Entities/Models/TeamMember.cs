@@ -11,6 +11,7 @@ namespace Task_Flow.Entities.Models
 
         public string? UserId { get; set; }
         public string? Role { get; set; }
+        public bool GitHubAccessGranted { get; set; }
 
         ///
         public virtual CustomUser? User { get; set; }

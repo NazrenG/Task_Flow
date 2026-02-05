@@ -4,5 +4,6 @@
     {
         public int TaskId { get; set; }
         public int NewCanbanColumnId { get; set; }
+        public string Status {  get; set; }
     }
 }

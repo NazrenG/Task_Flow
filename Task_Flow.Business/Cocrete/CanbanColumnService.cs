@@ -34,7 +34,7 @@ namespace Task_Flow.Business.Cocrete
 
             var columnsToShift = allColumn
      .Where(x =>
-         x.ProjectId == createCanbanDto.ProjectId &&
+         x.SprintId == createCanbanDto.SprintId &&
          x.Order > afterColumn.Order)
      .ToList();
 
@@ -43,7 +43,7 @@ namespace Task_Flow.Business.Cocrete
 
             var newColumn = new CanbanColumn
             {
-                ProjectId = createCanbanDto.ProjectId,
+                SprintId = createCanbanDto.SprintId,
                 Name = createCanbanDto.Title,
                 StatusKey = createCanbanDto.Title.ToLower(),
                 Order = afterColumn.Order + 1,
@@ -58,7 +58,7 @@ namespace Task_Flow.Business.Cocrete
             await kanbanColumnDal.Add(new CanbanColumn
             {
                 Name = createDefaultCanbanNameDto.Name,
-                ProjectId = createDefaultCanbanNameDto.ProjectId,
+                SprintId = createDefaultCanbanNameDto.SprintId,
                 StatusKey = createDefaultCanbanNameDto.StatusKey,
                 Order = createDefaultCanbanNameDto.Order,
                 IsFixed = true
@@ -79,7 +79,7 @@ namespace Task_Flow.Business.Cocrete
 
             var allCanbanColumn = await kanbanColumnDal.GetAll();
             var todoColumn = allCanbanColumn.First(x =>
-                 x.ProjectId == canbanName.ProjectId &&
+                 x.SprintId == canbanName.SprintId &&
                  x.StatusKey == "to do");
             if (todoColumn == null) throw new Exception("To Do column not found");
 
@@ -92,7 +92,7 @@ namespace Task_Flow.Business.Cocrete
             await kanbanColumnDal.Delete(canbanName);
 
             var columnsToFix = await kanbanColumnDal.GetAll(x =>
-          x.ProjectId == canbanName.ProjectId &&
+          x.SprintId == canbanName.SprintId &&
           x.Order > canbanName.Order);
 
             foreach (var col in columnsToFix)
@@ -109,9 +109,9 @@ namespace Task_Flow.Business.Cocrete
         //    return list;
         //        }
 
-        public async Task<List<CanbanColumn>> GetAllCanbanColumn(int projectId)
+        public async Task<List<CanbanColumn>> GetAllCanbanColumn(int sprintId)
         {
-            var list = await kanbanColumnDal.GetAllColumn(projectId);
+            var list = await kanbanColumnDal.GetAllColumn(sprintId);
             return list;
         }
     }

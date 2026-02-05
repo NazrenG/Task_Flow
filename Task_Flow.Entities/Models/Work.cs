@@ -16,6 +16,7 @@ namespace Task_Flow.Entities.Models
         public string? Priority { get; set; }// Urgent, Primary, Simple
         
         public string? Color { get; set; }
+        public string? GitHubBranchName { get; set; }
         public int ProjectId { get; set; }
         public int? SprintId { get; set; }
         public int? CanbanColumnId { get; set; }

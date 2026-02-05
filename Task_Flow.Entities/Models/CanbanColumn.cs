@@ -7,7 +7,7 @@ namespace Task_Flow.Entities.Models
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public int ProjectId { get; set; }
+        public int SprintId { get; set; }
         public string StatusKey { get; set; } = null!;
         // "to-do", "in-progress", "review"
 
@@ -15,7 +15,7 @@ namespace Task_Flow.Entities.Models
 
         public bool IsFixed { get; set; }
 
-        public Project Project { get; set; }
+        public Sprint Sprint { get; set; }
         public List<Work> TaskForUsers { get; set; }
     }
 }
