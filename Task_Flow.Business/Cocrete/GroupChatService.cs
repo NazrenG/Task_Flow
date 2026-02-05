@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 using Task_Flow.Business.Abstract;
@@ -77,11 +78,13 @@ namespace Task_Flow.Business.Cocrete
         public async Task DeleteGroupChat(int groupId)
         {
          (await _groupChatDal.GetById(g => g.Id == groupId)).IsDeleted=true;
+            (await _groupChatMembersDal.GetAll(m => m.GroupId == groupId&&!m.IsDeleted&&!m.IsRemoved)).Select(m => m.IsDeleted = true);
+
         }
 
         public async Task<List<GroupChatMembers>> GetAllGroupMembersAsync(int groupId)
         {
-          return  await _groupChatMembersDal.GetAll(c=>c.GroupId==groupId&&!c.IsRemoved); ///member
+          return  await _groupChatMembersDal.GetAll(c=>c.GroupId==groupId&&!c.IsRemoved&&!c.IsDeleted); ///member
         }
 
         public async Task<List<GroupChatMessage>> GetAllGroupMessages(int groupId)
@@ -100,7 +103,7 @@ namespace Task_Flow.Business.Cocrete
         public async Task<List<GroupChat>> GetAllUserGroupChatsAsync(string userId)
         {
             var memberships = await _groupChatMembersDal
-        .GetAll(m => m.UserId == userId && !m.IsRemoved);
+        .GetAll(m => m.UserId == userId && !m.IsRemoved&&!m.IsDeleted);
 
             var groupIds = memberships
                 .Select(m => m.GroupId)
@@ -192,6 +195,15 @@ namespace Task_Flow.Business.Cocrete
             await _groupChatDal.Update(group);
         }
 
-        //public async Task ExitGroup(int groupId,int )
+        public async Task ExitGroup(int groupId, string userId)
+        {
+            //var chat=await _groupChatDal.GetById(g=>g.Id == groupId);
+            var member=(await _groupChatMembersDal.GetAll(m => m.GroupId == groupId&&!m.IsRemoved)).FirstOrDefault(m => { return m.UserId == userId; });
+            if (member != null)
+            {
+                member.IsRemoved = true;
+                await _groupChatMembersDal.Update(member);
+            }
+        }
     }
 }

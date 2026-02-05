@@ -72,6 +72,16 @@ namespace Task_Flow.Business.Cocrete
             await _companyDal.Update(company);
         }
 
+        public async Task<bool>IsCompanyProject(int projectId)
+        {
+           var project=await _projectDal.GetById(p=>p.Id==projectId);
+            return project!=null;
+
+
+        }
+
+
+
         public async Task UserPaidForCompany(string ownerId)
         {
            var company =await _companyDal.GetById(c=>c.OwnerId == ownerId);

@@ -89,6 +89,10 @@ namespace Task_Flow.WebAPI.Controllers
         public async Task<IActionResult> AddMemberToGroup([FromBody] AddNewMembersGroupChatDto dto)
         {
           await _groupChatService.AddMembersToGroupChat(dto.GroupId,dto.MemberIds);
+
+            //var currentUserId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            //await _context.Clients.User(currentUserId).SendAsync("UpdateGroupChatModal");
             return Ok();
         }
 
@@ -165,10 +169,35 @@ namespace Task_Flow.WebAPI.Controllers
         [HttpDelete("RemoveGroupMember/{id}")]
         public async Task<IActionResult> RemoveGroupMember(int id, [FromBody] string userId)
         {
+            var currentUserId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
             await _groupChatService.RemoveGroupMember(id,userId);
+            await _context.Clients.User(currentUserId).SendAsync("UpdateGroupChatModal");
+            return Ok();
+        } 
+        
+        [HttpDelete("DeleteGroup/{id}")]
+        public async Task<IActionResult> DeleteGroup(int id)
+        {
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            await _groupChatService.DeleteGroupChat(id);
+            await _context.Clients.User(userId).SendAsync("UpdateGroupChatList");
             return Ok();
         }
 
+        [HttpPut("ExitGroup/{groupId}")]
+        public async Task<IActionResult> ExitGroup(int groupId)
+        {
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            await _groupChatService.ExitGroup(groupId, userId);
+
+            await _context.Clients.User(userId).SendAsync("UpdateGroupChatModal");
+            await _context.Clients.User(userId).SendAsync("UpdateGroupChatList");
+
+            return Ok();
+
+        }
 
     }
 }

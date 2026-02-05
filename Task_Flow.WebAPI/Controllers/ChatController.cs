@@ -108,7 +108,9 @@ namespace Task_Flow.WebAPI.Controllers
 
         }
 
-        [Authorize]
+
+
+            [Authorize]
         [HttpGet("UserMessages")]
         public async Task<IActionResult> GetUserMessages()
         {

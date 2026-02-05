@@ -22,6 +22,7 @@ namespace Task_Flow.Business.Abstract
         Task UpdateGroupNameAsync(string groupName, int groupId);
         Task RemoveGroupMember(int groupId,string userId);
         Task AddMemberToGroupChatAsync(int groupId,string userId);
+        Task ExitGroup(int groupId, string userId);
         Task<List<CustomUser>> SearchFriendsForChat(List<string>friendIds,int groupId,string key);
 
     }

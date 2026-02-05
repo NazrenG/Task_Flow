@@ -2,6 +2,7 @@
 {
     public class GroupChatMemberDetailDto
     {
+      
         public string UserId { get; set; } 
         public string Fullname { get; set; }
         public string ProfileImage  { get; set; }

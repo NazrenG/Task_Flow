@@ -168,7 +168,7 @@ namespace Task_Flow.WebAPI.Controllers
                 StartDate = item.StartDate,
                 EndDate = item.EndDate,
                 Status = item.Status,
-                IsCompanyProject=item.CompanyId!=0?true:false,
+                IsCompanyProject=await _companyService.IsCompanyProject(id),
             };
 
             var teamMembers = await _teamMemberService.GetTaskMemberListById(id);

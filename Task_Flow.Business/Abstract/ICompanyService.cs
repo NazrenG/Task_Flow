@@ -18,5 +18,6 @@ namespace Task_Flow.Business.Abstract
         Task  UserPaidForCompany(string ownerId);
         Task UpdateCompany(int id,string name,string email,string address);
         Task DeleteCompany(int id);
+        Task<bool> IsCompanyProject(int projectId);
     }
 }
