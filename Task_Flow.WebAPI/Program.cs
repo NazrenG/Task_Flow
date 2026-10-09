@@ -23,6 +23,7 @@ using Task_Flow.WebAPI.Services.NotificationCenter.RequestAcceptance;
 using Task_Flow.WebAPI.Services.Notifications;
 using Task_Flow.WebAPI.Services.Profiles;
 using Task_Flow.WebAPI.Services.Quizzes;
+using Task_Flow.WebAPI.Services.TaskCustomizations;
 using Task_Flow.WebAPI.Services.TeamMembers;
 using Task_Flow.WebAPI.Services.UserTasks;
 using Task_Flow.WebAPI.Services.Projects;
@@ -164,6 +165,8 @@ builder.Services.AddScoped<ICompanyRealtimeNotifier, CompanyRealtimeNotifier>();
 builder.Services.AddScoped<ICompanyQueryService, CompanyQueryService>();
 builder.Services.AddScoped<ICompanyCommandService, CompanyCommandService>();
 builder.Services.AddScoped<IMessageAppService, MessageAppService>();
+builder.Services.AddScoped<ITaskCustomizeQueryService, TaskCustomizeQueryService>();
+builder.Services.AddScoped<ITaskCustomizeCommandService, TaskCustomizeCommandService>();
 
 
 // Identity configuration (only user management, no roles)
