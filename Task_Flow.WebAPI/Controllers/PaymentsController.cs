@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Stripe;
+﻿using Microsoft.AspNetCore.Mvc;
+using Task_Flow.WebAPI.Controllers.Extensions;
 using Task_Flow.WebAPI.Dtos;
+using Task_Flow.WebAPI.Services.Payments;
 
 namespace Task_Flow.WebAPI.Controllers
 {
@@ -9,26 +9,17 @@ namespace Task_Flow.WebAPI.Controllers
     [ApiController]
     public class PaymentsController : ControllerBase
     {
+        private readonly IPaymentAppService _paymentService;
+
+        public PaymentsController(IPaymentAppService paymentService)
+        {
+            _paymentService = paymentService;
+        }
+
         [HttpPost("create-payment-intent")]
-        public IActionResult CreatePaymentIntent([FromBody] CreatePaymentRequestDto request)
-    {
-        var options = new PaymentIntentCreateOptions
+        public async Task<IActionResult> CreatePaymentIntent([FromBody] CreatePaymentRequestDto request)
         {
-            Amount = request.Amount,
-            Currency = "usd",
-            AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions
-            {
-                Enabled = true
-            }
-        };
-
-        var service = new PaymentIntentService();
-        var paymentIntent = service.Create(options);
-
-        return Ok(new
-        {
-            clientSecret = paymentIntent.ClientSecret
-        });
+            return this.ToActionResult(await _paymentService.CreatePaymentIntentAsync(request.Amount));
+        }
     }
-}
 }

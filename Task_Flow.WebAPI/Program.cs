@@ -23,6 +23,7 @@ using Task_Flow.WebAPI.Services.Messages;
 using Task_Flow.WebAPI.Services.NotificationCenter;
 using Task_Flow.WebAPI.Services.NotificationCenter.RequestAcceptance;
 using Task_Flow.WebAPI.Services.Notifications;
+using Task_Flow.WebAPI.Services.Payments;
 using Task_Flow.WebAPI.Services.Predictions;
 using Task_Flow.WebAPI.Services.Profiles;
 using Task_Flow.WebAPI.Services.ProjectActivities;
@@ -180,6 +181,7 @@ builder.Services.AddScoped<ICommentQueryService, CommentQueryService>();
 builder.Services.AddScoped<ICommentCommandService, CommentCommandService>();
 builder.Services.AddScoped<IGitHubAccountService, GitHubAccountService>();
 builder.Services.AddHttpClient<IWordCompletionService, GeminiWordCompletionService>();
+builder.Services.AddScoped<IPaymentAppService, StripePaymentAppService>();
 
 
 // Identity configuration (only user management, no roles)
