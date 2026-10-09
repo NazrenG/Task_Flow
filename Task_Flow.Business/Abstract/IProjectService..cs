@@ -7,6 +7,7 @@ namespace Task_Flow.DataAccess.Abstract
 
         Task<List<Project>> GetProjects(string userId);
         Task<Project> GetProjectById(int id);
+        Task<Project?> GetProjectWithTasksById(int id);
         Task<string> GetProjectNameById(int id);
         Task Add(Project project);
         Task Update(Project project);

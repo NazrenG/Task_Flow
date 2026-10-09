@@ -8,6 +8,7 @@ namespace Task_Flow.DataAccess.Abstract
     {
         public Task<List<Project>> GetAllProjects();
         public Task<Project> GetProjectById(int projectId);
+        public Task<Project?> GetProjectWithTasksById(int projectId);
 
 
         public Task<int> GetUserProjectCount(string userId);

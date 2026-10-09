@@ -7,13 +7,22 @@ namespace Task_Flow.WebAPI.Controllers.Extensions
     {
         public static IActionResult ToActionResult<T>(this ControllerBase controller, ServiceResult<T> result)
         {
-            return result.Status switch
+            switch (result.Status)
             {
-                ServiceResultStatus.Success => controller.Ok(result.Value),
-                ServiceResultStatus.BadRequest => controller.BadRequest(result.Error),
-                ServiceResultStatus.NotFound => result.Error == null ? controller.NotFound() : controller.NotFound(result.Error),
-                _ => controller.StatusCode(StatusCodes.Status500InternalServerError, result.Error)
-            };
+                case ServiceResultStatus.Success:
+                    if (result.Value is Empty) return controller.Ok();
+                    return controller.Ok(result.Value);
+
+                case ServiceResultStatus.BadRequest:
+                    return controller.BadRequest(result.Error);
+
+                case ServiceResultStatus.NotFound:
+                    if (result.Error == null) return controller.NotFound();
+                    return controller.NotFound(result.Error);
+
+                default:
+                    return controller.StatusCode(StatusCodes.Status500InternalServerError, result.Error);
+            }
         }
     }
 }

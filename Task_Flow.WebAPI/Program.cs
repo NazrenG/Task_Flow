@@ -12,7 +12,11 @@ using Task_Flow.Entities.Data;
 using Task_Flow.Entities.Models;
 using Task_Flow.WebAPI.Hubs;
 using Task_Flow.WebAPI.Services;
+using Task_Flow.WebAPI.Services.NotificationCenter;
+using Task_Flow.WebAPI.Services.NotificationCenter.RequestAcceptance;
 using Task_Flow.WebAPI.Services.Notifications;
+using Task_Flow.WebAPI.Services.Profiles;
+using Task_Flow.WebAPI.Services.Projects;
 using Task_Flow.WebAPI.Services.Works;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -111,6 +115,21 @@ builder.Services.AddScoped<IGitHubService, GitHubService>();
 builder.Services.AddScoped<IWorkRealtimeNotifier, WorkRealtimeNotifier>();
 builder.Services.AddScoped<IWorkQueryService, WorkQueryService>();
 builder.Services.AddScoped<IWorkCommandService, WorkCommandService>();
+builder.Services.AddScoped<IProjectRealtimeNotifier, ProjectRealtimeNotifier>();
+builder.Services.AddScoped<IProjectQueryService, ProjectQueryService>();
+builder.Services.AddScoped<IProjectCommandService, ProjectCommandService>();
+builder.Services.AddScoped<INotificationRealtimeNotifier, NotificationRealtimeNotifier>();
+builder.Services.AddScoped<ICalendarNotificationAppService, CalendarNotificationAppService>();
+builder.Services.AddScoped<INotificationSettingAppService, NotificationSettingAppService>();
+builder.Services.AddScoped<IRecentActivityAppService, RecentActivityAppService>();
+builder.Services.AddScoped<IRequestNotificationAppService, RequestNotificationAppService>();
+builder.Services.AddScoped<IRequestAcceptHandler, ProjectRequestAcceptHandler>();
+builder.Services.AddScoped<IRequestAcceptHandler, FriendRequestAcceptHandler>();
+builder.Services.AddScoped<IRequestAcceptHandler, CompanyWorkerRequestAcceptHandler>();
+builder.Services.AddSingleton<IVerificationCodeStore, InMemoryVerificationCodeStore>();
+builder.Services.AddScoped<IProfileRealtimeNotifier, ProfileRealtimeNotifier>();
+builder.Services.AddScoped<IProfileAppService, ProfileAppService>();
+builder.Services.AddScoped<IPasswordAppService, PasswordAppService>();
 
 
 // Identity configuration (only user management, no roles)

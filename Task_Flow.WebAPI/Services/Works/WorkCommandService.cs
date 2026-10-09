@@ -1,9 +1,10 @@
-using Task_Flow.Business.Abstract;
+﻿using Task_Flow.Business.Abstract;
 using Task_Flow.Business.Cocrete;
 using Task_Flow.DataAccess.Abstract;
 using Task_Flow.Entities.Models;
 using Task_Flow.WebAPI.Dtos;
 using Task_Flow.WebAPI.Services.Mapping;
+using Task_Flow.WebAPI.Services.NotificationCenter;
 using Task_Flow.WebAPI.Services.Notifications;
 using Task_Flow.WebAPI.Services.Results;
 
@@ -11,7 +12,6 @@ namespace Task_Flow.WebAPI.Services.Works
 {
     public class WorkCommandService : IWorkCommandService
     {
-        private const string ProjectRequestType = "ProjectRequest";
         private const string UpdateSuccessMessage = "update succesfuly";
         private const string DeleteSuccessMessage = "delete succesful";
 
@@ -88,7 +88,7 @@ namespace Task_Flow.WebAPI.Services.Works
 
             var editedMessage = $"Your task edit by {project.CreatedBy?.Firstname} {project.CreatedBy?.Lastname} in the project named {project.Title} ";
 
-            await RunRealtimeSafelyAsync(async () =>
+            await RealtimeGuard.RunSafelyAsync(async () =>
             {
                 await _notifier.NotifyTaskEditedByManagerAsync(userId, member.Id, value.CreatedById!);
 
@@ -98,7 +98,7 @@ namespace Task_Flow.WebAPI.Services.Works
                     IsAccepted = false,
                     ReceiverId = member.Id,
                     SenderId = userId,
-                    NotificationType = ProjectRequestType,
+                    NotificationType = RequestNotificationTypes.ProjectRequest,
                     ProjectName = project.Title,
                     SentDate = DateTime.UtcNow,
                     Text = editedMessage
@@ -146,7 +146,7 @@ namespace Task_Flow.WebAPI.Services.Works
             var task = value.ToNewWork(branchName);
             await _taskService.Add(task);
 
-            await RunRealtimeSafelyAsync(() =>
+            await RealtimeGuard.RunSafelyAsync(() =>
                 _notifier.NotifyTaskCreatedAsync(userId, member.Id, value.CreatedById!));
 
             await _requestNotificationService.Add(new RequestNotification
@@ -155,7 +155,7 @@ namespace Task_Flow.WebAPI.Services.Works
                 SenderId = userId,
                 Text = $"You have a new task({value.Title}) in the project named {project.Title}",
                 IsAccepted = false,
-                NotificationType = ProjectRequestType,
+                NotificationType = RequestNotificationTypes.ProjectRequest,
                 ProjectName = project.Title
             });
             // notification list project taski ucun
@@ -187,7 +187,7 @@ namespace Task_Flow.WebAPI.Services.Works
 
             await _taskService.Delete(task);
 
-            await RunRealtimeSafelyAsync(() =>
+            await RealtimeGuard.RunSafelyAsync(() =>
                 _notifier.NotifyTaskDeletedAsync(userId, task.CreatedById!));
 
             await AddProjectActivityAsync(userId, projectId,
@@ -199,7 +199,7 @@ namespace Task_Flow.WebAPI.Services.Works
                 SenderId = userId,
                 Text = $"The task '{task.Title}' has been deleted by the project manager in the project '{project.Title}'.",
                 IsAccepted = false,
-                NotificationType = ProjectRequestType,
+                NotificationType = RequestNotificationTypes.ProjectRequest,
                 ProjectName = project.Title
             });
             // notification list project taski ucun
@@ -236,19 +236,6 @@ namespace Task_Flow.WebAPI.Services.Works
                 ProjectId = projectId,
                 Text = text
             });
-        }
-
-        // SignalR xətaları əsas əməliyyatı dayandırmamalıdır (əvvəlki davranış saxlanılır)
-        private static async Task RunRealtimeSafelyAsync(Func<Task> action)
-        {
-            try
-            {
-                await action();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"SignalR error: {ex.Message}");
-            }
         }
     }
 }
