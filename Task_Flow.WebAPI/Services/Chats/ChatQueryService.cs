@@ -1,4 +1,4 @@
-using Task_Flow.Business.Abstract;
+﻿using Task_Flow.Business.Abstract;
 using Task_Flow.DataAccess.Abstract;
 using Task_Flow.Entities.Models;
 using Task_Flow.WebAPI.Dtos;
@@ -74,6 +74,51 @@ namespace Task_Flow.WebAPI.Services.Chats
             }
 
             return ServiceResult<object>.Success(new { Result = true, List = messages });
+        }
+
+        // Hər çatın son mesajı, göndərənin məlumatları ilə
+        public async Task<ServiceResult<object>> GetLatestMessagesAsync(string userId)
+        {
+            var latestMessages = await GetLatestMessagePerChatAsync(userId);
+            var result = new List<MessageListDisplayer>();
+
+            foreach (var message in latestMessages)
+            {
+                var sender = await _userService.GetUserById(message.SenderId!);
+                result.Add(new MessageListDisplayer
+                {
+                    Sender = sender.Firstname + " " + sender.Lastname,
+                    Content = message.Content!,
+                    SentDate = message.SentDate.ToShortDateString(),
+                    Image = sender.Image!
+                });
+            }
+
+            return ServiceResult<object>.Success(new { Dtos = result });
+        }
+
+        // Ən azı bir mesajı olan çatların sayı
+        public async Task<ServiceResult<object>> GetActiveChatCountAsync(string? userId)
+        {
+            var latestMessages = await GetLatestMessagePerChatAsync(userId!);
+            return ServiceResult<object>.Success(new { MessCount = latestMessages.Count });
+        }
+
+        private async Task<List<ChatMessage>> GetLatestMessagePerChatAsync(string userId)
+        {
+            var chats = await _chatService.GetAllChatByUserId(userId);
+            var latestMessages = new List<ChatMessage>();
+
+            foreach (var chat in chats)
+            {
+                var latestMessage = await _chatMessageService.GetLatestMessageByChatIdAsync(chat.Id);
+                if (latestMessage != null)
+                {
+                    latestMessages.Add(latestMessage);
+                }
+            }
+
+            return latestMessages;
         }
 
         private async Task<List<Friend>> GetMutualFriendsAsync(string userId)

@@ -1,4 +1,4 @@
-using Task_Flow.WebAPI.Services.Results;
+﻿using Task_Flow.WebAPI.Services.Results;
 
 namespace Task_Flow.WebAPI.Services.Chats
 {
@@ -9,5 +9,7 @@ namespace Task_Flow.WebAPI.Services.Chats
     {
         Task<ServiceResult<object>> GetChatListAsync(string userId);
         Task<ServiceResult<object>> GetIncomingMessagesAsync(string userId);
+        Task<ServiceResult<object>> GetLatestMessagesAsync(string userId);
+        Task<ServiceResult<object>> GetActiveChatCountAsync(string? userId);
     }
 }

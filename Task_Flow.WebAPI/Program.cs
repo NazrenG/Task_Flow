@@ -17,6 +17,7 @@ using Task_Flow.WebAPI.Services.Companies;
 using Task_Flow.WebAPI.Services.Friends;
 using Task_Flow.WebAPI.Services.GroupChats;
 using Task_Flow.WebAPI.Services;
+using Task_Flow.WebAPI.Services.Messages;
 using Task_Flow.WebAPI.Services.NotificationCenter;
 using Task_Flow.WebAPI.Services.NotificationCenter.RequestAcceptance;
 using Task_Flow.WebAPI.Services.Notifications;
@@ -162,6 +163,7 @@ builder.Services.AddScoped<IChatQueryService, ChatQueryService>();
 builder.Services.AddScoped<ICompanyRealtimeNotifier, CompanyRealtimeNotifier>();
 builder.Services.AddScoped<ICompanyQueryService, CompanyQueryService>();
 builder.Services.AddScoped<ICompanyCommandService, CompanyCommandService>();
+builder.Services.AddScoped<IMessageAppService, MessageAppService>();
 
 
 // Identity configuration (only user management, no roles)
