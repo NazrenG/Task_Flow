@@ -19,6 +19,7 @@ using Task_Flow.WebAPI.Services.NotificationCenter;
 using Task_Flow.WebAPI.Services.NotificationCenter.RequestAcceptance;
 using Task_Flow.WebAPI.Services.Notifications;
 using Task_Flow.WebAPI.Services.Profiles;
+using Task_Flow.WebAPI.Services.Quizzes;
 using Task_Flow.WebAPI.Services.TeamMembers;
 using Task_Flow.WebAPI.Services.UserTasks;
 using Task_Flow.WebAPI.Services.Projects;
@@ -149,6 +150,8 @@ builder.Services.AddScoped<IGroupChatQueryService, GroupChatQueryService>();
 builder.Services.AddScoped<IGroupChatCommandService, GroupChatCommandService>();
 builder.Services.AddScoped<IFriendQueryService, FriendQueryService>();
 builder.Services.AddScoped<IFriendCommandService, FriendCommandService>();
+builder.Services.AddScoped<IOccupationStatisticsService, OccupationStatisticsService>();
+builder.Services.AddScoped<IQuizAppService, QuizAppService>();
 
 
 // Identity configuration (only user management, no roles)
