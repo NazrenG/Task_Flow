@@ -157,6 +157,7 @@ builder.Services.AddScoped<IChatRealtimeNotifier, ChatRealtimeNotifier>();
 builder.Services.AddScoped<IChatMessageTextResolver, ChatMessageTextResolver>();
 builder.Services.AddScoped<IChatMessageQueryService, ChatMessageQueryService>();
 builder.Services.AddScoped<IChatMessageCommandService, ChatMessageCommandService>();
+builder.Services.AddScoped<IChatQueryService, ChatQueryService>();
 
 
 // Identity configuration (only user management, no roles)
