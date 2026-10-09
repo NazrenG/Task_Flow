@@ -8,5 +8,6 @@ namespace Task_Flow.DataAccess.Abstract
     {
           Task<List<int>> GetTaskSummaryByMonthAsync(int projectId,int month,int year);
         Task<List<Work>> GetAllTask();
+        Task<List<Work>> GetTasksByProjectOwner(string ownerId);
     }
 }

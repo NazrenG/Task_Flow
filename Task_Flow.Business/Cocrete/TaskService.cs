@@ -67,6 +67,11 @@ namespace Task_Flow.Business.Cocrete
             await dal.Update(task);
         }
 
+        public async Task<List<Work>> GetTasksByProjectOwner(string ownerId)
+        {
+            return await dal.GetTasksByProjectOwner(ownerId);
+        }
+
         public async Task<List<Work>> GetBacklogs(int projectId)
         {
             var list = await dal.GetAllTask();
