@@ -1,12 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http.Headers;
 using System.Security.Claims;
-using System.Text.Json;
-using Task_Flow.Business.Abstract;
-using Task_Flow.Business.Cocrete;
-using Task_Flow.DataAccess.Abstract;
+using Task_Flow.WebAPI.Controllers.Extensions;
+using Task_Flow.WebAPI.Services.GitHub;
 
 namespace Task_Flow.WebAPI.Controllers
 {
@@ -14,16 +10,13 @@ namespace Task_Flow.WebAPI.Controllers
     [ApiController]
     public class GitHubController : ControllerBase
     {
-        private readonly IGitHubService _gitHubService;
-        private readonly IUserService userService;
-        private readonly IConfiguration _configuration;
+        private readonly IGitHubAccountService _gitHubAccountService;
 
-        public GitHubController(IGitHubService gitHubService, IUserService userService, IConfiguration configuration)
+        public GitHubController(IGitHubAccountService gitHubAccountService)
         {
-            _gitHubService = gitHubService;
-            this.userService = userService;
-            _configuration = configuration;
+            _gitHubAccountService = gitHubAccountService;
         }
+
         [Authorize]
         [HttpGet("authorize")]
         public async Task<IActionResult> Authorize()
@@ -31,13 +24,9 @@ namespace Task_Flow.WebAPI.Controllers
             try
             {
                 var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId)) return Unauthorized(new { message = "User not authenticated" });
 
-                if (string.IsNullOrEmpty(userId))
-                    return Unauthorized(new { message = "User not authenticated" });
-
-                var authUrl = await _gitHubService.GetAuthorizationUrl(userId);
-
-                return Ok(new { authUrl });
+                return this.ToActionResult(await _gitHubAccountService.GetAuthorizationUrlAsync(userId));
             }
             catch (Exception ex)
             {
@@ -51,39 +40,18 @@ namespace Task_Flow.WebAPI.Controllers
         {
             try
             {
-                if (string.IsNullOrEmpty(code))
-                    return BadRequest("Authorization code is missing");
+                if (string.IsNullOrEmpty(code)) return BadRequest("Authorization code is missing");
 
-                var accessToken = await _gitHubService.ExchangeCodeForToken(code, state);
-
-                var httpClient = new HttpClient();
-                httpClient.DefaultRequestHeaders.Add("User-Agent", "YourApp");
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-                var userResponse = await httpClient.GetAsync("https://api.github.com/user");
-                userResponse.EnsureSuccessStatusCode();
-
-                var githubUser = await userResponse.Content.ReadFromJsonAsync<JsonElement>();
-                var githubUsername = githubUser.GetProperty("login").GetString();
-
-                var user = await userService.GetUserById(state);
-                if (user != null)
-                {
-                    user.GitHubAccessToken = accessToken;
-                    user.GitHubUsername = githubUsername;
-                    await userService.Update(user);
-                }
+                await _gitHubAccountService.ConnectAccountAsync(code, state);
 
                 // Frontend-ə redirect
-                var redirectUrl = $"{_configuration["FrontendUrl"]}/profile?github=success";
-                return Redirect(redirectUrl);
+                return Redirect(_gitHubAccountService.GetProfileRedirectUrl(success: true));
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"GitHub Callback Error: {ex.Message}");
-                var redirectUrl = $"{_configuration["FrontendUrl"]}/profile?github=error";
-                return Redirect(redirectUrl);
+                return Redirect(_gitHubAccountService.GetProfileRedirectUrl(success: false));
             }
         }
     }
-    }
+}

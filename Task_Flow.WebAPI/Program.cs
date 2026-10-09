@@ -16,6 +16,7 @@ using Task_Flow.WebAPI.Services.Chats;
 using Task_Flow.WebAPI.Services.Comments;
 using Task_Flow.WebAPI.Services.Companies;
 using Task_Flow.WebAPI.Services.Friends;
+using Task_Flow.WebAPI.Services.GitHub;
 using Task_Flow.WebAPI.Services.GroupChats;
 using Task_Flow.WebAPI.Services;
 using Task_Flow.WebAPI.Services.Messages;
@@ -176,6 +177,7 @@ builder.Services.AddScoped<ISprintQueryService, SprintQueryService>();
 builder.Services.AddScoped<ISprintCommandService, SprintCommandService>();
 builder.Services.AddScoped<ICommentQueryService, CommentQueryService>();
 builder.Services.AddScoped<ICommentCommandService, CommentCommandService>();
+builder.Services.AddScoped<IGitHubAccountService, GitHubAccountService>();
 
 
 // Identity configuration (only user management, no roles)

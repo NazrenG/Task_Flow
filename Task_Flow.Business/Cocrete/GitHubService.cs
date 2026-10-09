@@ -65,6 +65,19 @@ namespace Task_Flow.Business.Cocrete
             return tokenResponse.AccessToken;
         }
 
+        // Token-in sahibi olan GitHub istifadəçisinin login adı
+        public async Task<string?> GetUsername(string accessToken)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/user");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var response = await _httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            var githubUser = await response.Content.ReadFromJsonAsync<JsonElement>();
+            return githubUser.GetProperty("login").GetString();
+        }
+
         public async Task<string> CreateRepository(string accessToken, string repoName, string description)
         {
             _httpClient.DefaultRequestHeaders.Authorization =
