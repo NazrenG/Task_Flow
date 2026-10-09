@@ -12,6 +12,7 @@ using Task_Flow.Entities.Data;
 using Task_Flow.Entities.Models;
 using Task_Flow.WebAPI.Hubs;
 using Task_Flow.WebAPI.Services.Auth;
+using Task_Flow.WebAPI.Services.Chats;
 using Task_Flow.WebAPI.Services.Friends;
 using Task_Flow.WebAPI.Services.GroupChats;
 using Task_Flow.WebAPI.Services;
@@ -152,6 +153,10 @@ builder.Services.AddScoped<IFriendQueryService, FriendQueryService>();
 builder.Services.AddScoped<IFriendCommandService, FriendCommandService>();
 builder.Services.AddScoped<IOccupationStatisticsService, OccupationStatisticsService>();
 builder.Services.AddScoped<IQuizAppService, QuizAppService>();
+builder.Services.AddScoped<IChatRealtimeNotifier, ChatRealtimeNotifier>();
+builder.Services.AddScoped<IChatMessageTextResolver, ChatMessageTextResolver>();
+builder.Services.AddScoped<IChatMessageQueryService, ChatMessageQueryService>();
+builder.Services.AddScoped<IChatMessageCommandService, ChatMessageCommandService>();
 
 
 // Identity configuration (only user management, no roles)
