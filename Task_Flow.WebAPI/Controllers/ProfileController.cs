@@ -1,18 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-using Newtonsoft.Json.Linq;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using Task_Flow.Business.Abstract;
-using Task_Flow.Business.Cocrete;
-using Task_Flow.DataAccess.Abstract;
-using Task_Flow.DataAccess.Concrete;
-using Task_Flow.Entities.Models;
+using Task_Flow.WebAPI.Controllers.Extensions;
 using Task_Flow.WebAPI.Dtos;
-using Task_Flow.WebAPI.Hubs;
-using static System.Net.Mime.MediaTypeNames;
+using Task_Flow.WebAPI.Services.Profiles;
 
 namespace Task_Flow.WebAPI.Controllers
 {
@@ -20,55 +11,31 @@ namespace Task_Flow.WebAPI.Controllers
     [ApiController]
     public class ProfileController : ControllerBase
     {
-        private readonly UserManager<CustomUser> _userManager;
-        private readonly IConfiguration _configuration;
-        private readonly IHubContext<ConnectionHub> _hubContext;
-        private readonly IUserService _userService;
-        private readonly MailService _emailService;
-        private readonly SignInManager<CustomUser> _signInManager;
-        private static readonly Dictionary<string, int> _verificationCodes = new();
-        private readonly IFileService _fileService;
-        private readonly IRecentActivityService recentActivityService;
+        private readonly IProfileAppService _profileService;
+        private readonly IPasswordAppService _passwordService;
 
-        public ProfileController(UserManager<CustomUser> userManager, IConfiguration configuration, IHubContext<ConnectionHub> hubContext,
-            IUserService userService, SignInManager<CustomUser> signInManager, MailService emailService, IFileService fileService, IRecentActivityService recentActivityService)
+        public ProfileController(IProfileAppService profileService, IPasswordAppService passwordService)
         {
-            _userManager = userManager;
-            _configuration = configuration;
-            _hubContext = hubContext;
-            _userService = userService;
-            _signInManager = signInManager;
-            _emailService = emailService;
-            _fileService = fileService;
-            this.recentActivityService = recentActivityService;
+            _profileService = profileService;
+            _passwordService = passwordService;
         }
+
+        private string? CurrentUserId => HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        private IActionResult InvalidData() => BadRequest(new { message = "Invalid data provided." });
+
+        private IActionResult UserNotAuthenticated() => BadRequest(new { message = "User not authenticated." });
+
         [Authorize]
         [HttpGet("profile")]
         public async Task<IActionResult> ViewProfile()
         {
             try
             {
-                var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var userId = CurrentUserId;
+                if (string.IsNullOrEmpty(userId)) return Unauthorized(new { message = "User not authenticated" });
 
-                if (string.IsNullOrEmpty(userId))
-                    return Unauthorized(new { message = "User not authenticated" });
-
-                var user = await _userService.GetUserById(userId);
-
-                if (user == null)
-                    return NotFound(new { message = "User not found" });
-
-                return Ok(new
-                {
-                    userId= userId,
-                    userName = user.UserName,
-                    email = user.Email,
-                    firstname = user.Firstname,
-                    lastname = user.Lastname,
-                    image = user.Image,
-                    gitHubAccessToken = user.GitHubAccessToken,
-                    gitHubUsername = user.GitHubUsername
-                });
+                return this.ToActionResult(await _profileService.GetOwnProfileAsync(userId));
             }
             catch (Exception ex)
             {
@@ -83,17 +50,7 @@ namespace Task_Flow.WebAPI.Controllers
         {
             try
             {
-                var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                var user = await _userService.GetUserById(userId);
-
-                if (user != null)
-                {
-                    user.GitHubAccessToken = null;
-                    user.GitHubUsername = null;
-                    await _userService.Update(user);
-                }
-
-                return Ok(new { message = "GitHub disconnected successfully" });
+                return this.ToActionResult(await _profileService.DisconnectGitHubAsync(CurrentUserId));
             }
             catch (Exception ex)
             {
@@ -102,280 +59,97 @@ namespace Task_Flow.WebAPI.Controllers
             }
         }
 
-
         [HttpGet("{email}")]
         public async Task<IActionResult> GetUserProfile(string email)
         {
-            var user = await _userManager.FindByEmailAsync(email);
-
-            if (user == null)
-            {
-                return NotFound("User not found");
-            }
-
-            return Ok(new
-            {
-                Username = user.UserName,
-                Firstname = user.Firstname,
-                Fullname = user.Firstname + " " + user.Lastname,
-                Lastname = user.Lastname,
-                Phone = user.PhoneNumber,
-                Gender = user.Gender,
-                Country = user.Country,
-                Birthday = user.Birthday,
-                Email = user.Email,
-                Path = user.Image,
-                Occupation = user.Occupation,
-
-            });
+            return this.ToActionResult(await _profileService.GetPublicProfileAsync(email));
         }
 
         [HttpGet("BasicInfoForProfil/{email}")]
         public async Task<IActionResult> GetBasicInfoForProfil(string email)
         {
-            var user = await _userManager.FindByEmailAsync(email);
-
-            if (user == null)
-            {
-                return NotFound("User not found");
-            }
-
-            return Ok(new
-            {
-                Username = user.UserName,
-                Firstname = user.Firstname,
-                Fullname = user.Firstname + " " + user.Lastname,
-                Lastname = user.Lastname,
-                Phone = user.PhoneNumber,
-                Gender = user.Gender,
-                Country = user.Country,
-                Birthday = user.Birthday,
-                Email = user.Email,
-                Path = user.Image,
-                Occupation = user.Occupation,
-                RegisterDate = user.RegisterDate,
-                IsOnline = user.IsOnline,
-
-
-            });
+            return this.ToActionResult(await _profileService.GetBasicInfoAsync(email));
         }
 
         [Authorize]
         [HttpPost("ChangePassword")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto value)
         {
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return Ok(new { Message = "User not authenticated.", Code = -1 });
-            }
-            var user = await _userService.GetUserById(userId);
-            var isPasswordCorrect = await _userManager.CheckPasswordAsync(user, value.OldPassword);
-            if (isPasswordCorrect && value.NewPassword == value.ConfirmPassword)
-            {
-                await _userManager.ChangePasswordAsync(user, value.OldPassword, value.NewPassword);
-                return Ok(new { Message = "Change password succesfuly" });
-            }
+            var userId = CurrentUserId;
+            if (userId == null) return Ok(new { Message = "User not authenticated.", Code = -1 });
 
-            return Ok(new { Message = "Error", Code = -1 });
-
+            return this.ToActionResult(await _passwordService.ChangePasswordAsync(userId, value));
         }
+
         [HttpPost("ForgotPassword")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto value)
         {
-            //maili gonderirsen eger dogrudursa true qaytarir
-            var isCheckUser = await _userService.CheckUsernameOrEmail(value.NameOrEmail);
-            if (!isCheckUser) return Ok(new { Result = false, Message = "This Mail Does Not Exist!" });
-
-            var code = _emailService.sendVerifyMail(value.NameOrEmail);
-            _verificationCodes[value.NameOrEmail] = code;
-
-            // Mail göndermek hissesini yaz,code -u ora gonder
-
-            return Ok(new { Result = true, Message = "Verification code sent" });
-
+            return this.ToActionResult(await _passwordService.SendPasswordResetCodeAsync(value));
         }
-        [HttpPost("verify-code")]//4 reqemli kod duzdurse
 
+        // 4 reqemli kod duzdurse
+        [HttpPost("verify-code")]
         public IActionResult VerifyCode(VerifyCodeDto model)
         {
-            if (_verificationCodes.TryGetValue(model.Email, out var code))
-            {
-                return Ok(new { Result = true, Message = "Code verified" });
-            }
-            return Ok(new { Results = false, Message = "Invalid code" });
+            return this.ToActionResult(_passwordService.VerifyCode(model));
         }
 
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword(ResetPasswordDto model)
         {
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null) return Ok(new { message = "User not found" });
-
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var result = await _userManager.ResetPasswordAsync(user, token, model.NewPassword);
-
-            if (result.Succeeded)
-            {
-                _verificationCodes.Remove(model.Email);
-                return Ok(new { Result = true, Message = "Password reset successful" });
-            }
-            return Ok(new { Result = false, Message = result.Errors });
+            return this.ToActionResult(await _passwordService.ResetPasswordAsync(model));
         }
 
         [HttpPost("email-confirmation")]
         public async Task<IActionResult> ConfirmEmail([FromBody] ForgotPasswordDto value)
         {
-            var isCheckUser = await _userService.CheckUsernameOrEmail(value.NameOrEmail);
-            if (isCheckUser) return Ok(new { Result = false, Message = "This Mail Does Not Exist!" });
-
-            var code = _emailService.sendVerifyMail(value.NameOrEmail);
-            _verificationCodes[value.NameOrEmail] = code;
-
-            // Mail göndermek hissesini yaz,code -u ora gonder
-
-            return Ok(new { Result = true, Message = "Verification code sent" });
+            return this.ToActionResult(await _passwordService.SendEmailConfirmationCodeAsync(value));
         }
 
         [Authorize]
         [HttpGet("logout")]
         public async Task<IActionResult> Logout()
         {
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return BadRequest(new { message = "User not found" });
-            }
+            var userId = CurrentUserId;
+            if (userId == null) return BadRequest(new { message = "User not found" });
 
-            var user = await _userService.GetUserById(userId);
-            if (user == null)
-            {
-                return NotFound(new { message = "User not found" });
-            }
-
-            user.IsOnline = false;
-            await _userService.Update(user);
-
-            await _signInManager.SignOutAsync();
-            await _hubContext.Clients.All.SendAsync("UpdateUserActivity");
-
-            return Ok(new { message = "Logout successful" });
+            return this.ToActionResult(await _profileService.LogoutAsync(userId));
         }
-
 
         [Authorize]
         [HttpPut("EditedProfile")]
         public async Task<IActionResult> EditProfile([FromBody] UserDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(new { message = "Invalid data provided." });
-            }
+            if (!ModelState.IsValid) return InvalidData();
 
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return BadRequest(new { message = "User not authenticated." });
-            }
+            var userId = CurrentUserId;
+            if (userId == null) return UserNotAuthenticated();
 
-            var user = await _userService.GetUserById(userId);
-            if (user == null)
-            {
-                return NotFound(new { message = "User not found." });
-            }
-
-            var temp = dto.Fullname?.Split(" ");
-            user.Firstname = temp != null && temp.Length > 0 ? temp[0] : user.Firstname;
-            user.Lastname = temp != null && temp.Length > 1 ? temp[1] : user.Lastname;
-
-            user.Birthday = dto.Birthday;
-            user.Email = dto.Email;
-            user.Country = dto.Country;
-            user.PhoneNumber = dto.Phone;
-            user.Occupation = dto.Occupation;
-            user.Gender = dto.Gender;
-
-            await _userService.Update(user);
-            await _hubContext.Clients.User(userId).SendAsync("ProfileUpdated");
-            var item = new RecentActivity
-            {
-                UserId = userId,
-                Text = "Profile updated succesfullly",
-                Type = "Profile",
-            };
-            await recentActivityService.Add(item);
-            await _hubContext.Clients.User(userId).SendAsync("RecentActivityUpdate1");
-
-            return Ok(new { message = "Edit successful" });
+            return this.ToActionResult(await _profileService.EditProfileAsync(userId, dto));
         }
 
         [Authorize]
         [HttpPut("EditedProfileImage")]
         public async Task<IActionResult> EditProfileImage([FromForm] IFormFile file)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(new { message = "Invalid data provided." });
-            }
+            if (!ModelState.IsValid) return InvalidData();
 
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return BadRequest(new { message = "User not authenticated." });
-            }
+            var userId = CurrentUserId;
+            if (userId == null) return UserNotAuthenticated();
 
-            var user = await _userService.GetUserById(userId);
-            if (user == null)
-            {
-                return NotFound(new { message = "User not found." });
-            }
-            if (file != null)
-            {
-                var filePath = await _fileService.SaveFile(file);
-                user.Image = filePath;
-            }
-
-            await _userService.Update(user);
-            await _hubContext.Clients.User(userId).SendAsync("ProfileUpdated");
-            var item = new RecentActivity
-            {
-                UserId = userId,
-                Text = "Profile image updated succesfullly",
-                Type = "Profile",
-            };
-            await recentActivityService.Add(item);
-            await _hubContext.Clients.User(userId).SendAsync("RecentActivityUpdate1");
-            return Ok(new { message = "Edit successful" });
+            return this.ToActionResult(await _profileService.EditProfileImageAsync(userId, file));
         }
 
         [Authorize]
         [HttpPut("AddingOccupationDuringQuiz")]
-
         public async Task<IActionResult> AddOccupationDuringQuiz([FromBody] UpdateProfileDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(new { message = "Invalid data provided." });
-            }
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return BadRequest(new { message = "User not authenticated." });
-            }
+            if (!ModelState.IsValid) return InvalidData();
 
-            var user = await _userService.GetUserById(userId);
-            if (user == null)
-            {
-                return NotFound(new { message = "User not found." });
-            }
-            user.Occupation = dto.Occupation;
-            await _userService.Update(user);
+            var userId = CurrentUserId;
+            if (userId == null) return UserNotAuthenticated();
 
-
-
-            return Ok(new { message = "Add occupation successfully" });
+            return this.ToActionResult(await _profileService.AddOccupationAsync(userId, dto));
         }
-
     }
-
 }

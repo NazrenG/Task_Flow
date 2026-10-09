@@ -15,6 +15,7 @@ using Task_Flow.WebAPI.Services;
 using Task_Flow.WebAPI.Services.NotificationCenter;
 using Task_Flow.WebAPI.Services.NotificationCenter.RequestAcceptance;
 using Task_Flow.WebAPI.Services.Notifications;
+using Task_Flow.WebAPI.Services.Profiles;
 using Task_Flow.WebAPI.Services.Projects;
 using Task_Flow.WebAPI.Services.Works;
 
@@ -125,6 +126,10 @@ builder.Services.AddScoped<IRequestNotificationAppService, RequestNotificationAp
 builder.Services.AddScoped<IRequestAcceptHandler, ProjectRequestAcceptHandler>();
 builder.Services.AddScoped<IRequestAcceptHandler, FriendRequestAcceptHandler>();
 builder.Services.AddScoped<IRequestAcceptHandler, CompanyWorkerRequestAcceptHandler>();
+builder.Services.AddSingleton<IVerificationCodeStore, InMemoryVerificationCodeStore>();
+builder.Services.AddScoped<IProfileRealtimeNotifier, ProfileRealtimeNotifier>();
+builder.Services.AddScoped<IProfileAppService, ProfileAppService>();
+builder.Services.AddScoped<IPasswordAppService, PasswordAppService>();
 
 
 // Identity configuration (only user management, no roles)

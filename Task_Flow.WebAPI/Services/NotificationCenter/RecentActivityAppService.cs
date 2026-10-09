@@ -1,4 +1,4 @@
-using Task_Flow.Business.Abstract;
+﻿using Task_Flow.Business.Abstract;
 using Task_Flow.Entities.Models;
 using Task_Flow.WebAPI.Dtos;
 using Task_Flow.WebAPI.Services.Mapping;
@@ -41,15 +41,20 @@ namespace Task_Flow.WebAPI.Services.NotificationCenter
             return ServiceResult<object>.Success(new { message = "Activity added successfully" });
         }
 
-        public async Task LogNotificationActivityAsync(string userId, string text)
+        public async Task LogActivityAsync(string userId, string text, string type)
         {
             await _recentActivityService.Add(new RecentActivity
             {
                 UserId = userId,
                 Text = text,
-                Type = NotificationActivityType
+                Type = type
             });
             await _notifier.NotifyRecentActivityAsync(userId);
+        }
+
+        public Task LogNotificationActivityAsync(string userId, string text)
+        {
+            return LogActivityAsync(userId, text, NotificationActivityType);
         }
     }
 }
