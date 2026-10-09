@@ -28,6 +28,13 @@ namespace Task_Flow.DataAccess.Concrete
                    .Include(o => o.TeamMembers)
                        .ThenInclude(tm => tm.User).FirstOrDefault(p=>p.Id==projectId);
         }
+        public async Task<Project?> GetProjectWithTasksById(int projectId)
+        {
+            return await _db.Projects
+                .Include(p => p.TaskForUsers)
+                .FirstOrDefaultAsync(p => p.Id == projectId);
+        }
+
         public async Task<int> GetUserProjectCount(string userId)
         {
             return _db.Projects.Count(u => u.CreatedById == userId);

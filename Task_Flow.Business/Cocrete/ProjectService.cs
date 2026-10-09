@@ -30,6 +30,11 @@ namespace Task_Flow.Business.Cocrete
             return await dal.GetProjectById(id);
         }
 
+        public async Task<Project?> GetProjectWithTasksById(int id)
+        {
+            return await dal.GetProjectWithTasksById(id);
+        }
+
         public async Task<List<Project>> GetProjects(string userId)
         {
             var items = await dal.GetAllProjects();

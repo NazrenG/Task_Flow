@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.SignalR;
 using Task_Flow.WebAPI.Hubs;
 
 namespace Task_Flow.WebAPI.Services.Notifications
@@ -89,6 +89,28 @@ namespace Task_Flow.WebAPI.Services.Notifications
                 WorkHubEvents.ProjectDetailTaskList,
                 WorkHubEvents.UserProfileTask,
                 WorkHubEvents.DashboardReceiveProject);
+
+            await NotifyProjectActivityAsync(assigneeId, managerId);
+        }
+
+        public async Task NotifyTaskColumnChangedAsync(string managerId, string assigneeId)
+        {
+            await SendAsync(assigneeId,
+                WorkHubEvents.UserTaskList,
+                WorkHubEvents.RunningTaskCount,
+                WorkHubEvents.CompletedTaskCount,
+                WorkHubEvents.OnHoldTaskCount,
+                WorkHubEvents.TaskTotalCount);
+
+            // canban ucun signalr
+            await SendAsync(managerId, WorkHubEvents.CanbanTaskUpdated);
+            await SendAsync(assigneeId,
+                WorkHubEvents.CanbanTaskUpdated,
+                WorkHubEvents.DashboardCalendarNotificationCount,
+                WorkHubEvents.DashboardReceiveProject,
+                WorkHubEvents.ProjectsTaskList,
+                WorkHubEvents.ProjectDetailTaskList,
+                WorkHubEvents.UserProfileTask);
 
             await NotifyProjectActivityAsync(assigneeId, managerId);
         }

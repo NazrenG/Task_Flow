@@ -13,6 +13,7 @@ using Task_Flow.Entities.Models;
 using Task_Flow.WebAPI.Hubs;
 using Task_Flow.WebAPI.Services;
 using Task_Flow.WebAPI.Services.Notifications;
+using Task_Flow.WebAPI.Services.Projects;
 using Task_Flow.WebAPI.Services.Works;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -111,6 +112,9 @@ builder.Services.AddScoped<IGitHubService, GitHubService>();
 builder.Services.AddScoped<IWorkRealtimeNotifier, WorkRealtimeNotifier>();
 builder.Services.AddScoped<IWorkQueryService, WorkQueryService>();
 builder.Services.AddScoped<IWorkCommandService, WorkCommandService>();
+builder.Services.AddScoped<IProjectRealtimeNotifier, ProjectRealtimeNotifier>();
+builder.Services.AddScoped<IProjectQueryService, ProjectQueryService>();
+builder.Services.AddScoped<IProjectCommandService, ProjectCommandService>();
 
 
 // Identity configuration (only user management, no roles)

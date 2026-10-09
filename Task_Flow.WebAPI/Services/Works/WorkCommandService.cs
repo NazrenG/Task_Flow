@@ -1,4 +1,4 @@
-using Task_Flow.Business.Abstract;
+﻿using Task_Flow.Business.Abstract;
 using Task_Flow.Business.Cocrete;
 using Task_Flow.DataAccess.Abstract;
 using Task_Flow.Entities.Models;
@@ -88,7 +88,7 @@ namespace Task_Flow.WebAPI.Services.Works
 
             var editedMessage = $"Your task edit by {project.CreatedBy?.Firstname} {project.CreatedBy?.Lastname} in the project named {project.Title} ";
 
-            await RunRealtimeSafelyAsync(async () =>
+            await RealtimeGuard.RunSafelyAsync(async () =>
             {
                 await _notifier.NotifyTaskEditedByManagerAsync(userId, member.Id, value.CreatedById!);
 
@@ -146,7 +146,7 @@ namespace Task_Flow.WebAPI.Services.Works
             var task = value.ToNewWork(branchName);
             await _taskService.Add(task);
 
-            await RunRealtimeSafelyAsync(() =>
+            await RealtimeGuard.RunSafelyAsync(() =>
                 _notifier.NotifyTaskCreatedAsync(userId, member.Id, value.CreatedById!));
 
             await _requestNotificationService.Add(new RequestNotification
@@ -187,7 +187,7 @@ namespace Task_Flow.WebAPI.Services.Works
 
             await _taskService.Delete(task);
 
-            await RunRealtimeSafelyAsync(() =>
+            await RealtimeGuard.RunSafelyAsync(() =>
                 _notifier.NotifyTaskDeletedAsync(userId, task.CreatedById!));
 
             await AddProjectActivityAsync(userId, projectId,
@@ -236,19 +236,6 @@ namespace Task_Flow.WebAPI.Services.Works
                 ProjectId = projectId,
                 Text = text
             });
-        }
-
-        // SignalR xətaları əsas əməliyyatı dayandırmamalıdır (əvvəlki davranış saxlanılır)
-        private static async Task RunRealtimeSafelyAsync(Func<Task> action)
-        {
-            try
-            {
-                await action();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"SignalR error: {ex.Message}");
-            }
         }
     }
 }
