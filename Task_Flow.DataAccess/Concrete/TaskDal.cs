@@ -21,6 +21,15 @@ namespace Task_Flow.DataAccess.Concrete
 
         }
 
+        public async Task<List<Work>> GetTasksByProjectOwner(string ownerId)
+        {
+            return await _context.Works
+                .Include(w => w.Project)
+                .Include(w => w.CreatedBy)
+                .Where(w => w.Project.CreatedById == ownerId)
+                .ToListAsync();
+        }
+
         public async Task<List<int>> GetTaskSummaryByMonthAsync(int projectId, int month, int year)
         {
             var startDate = new DateTime(year, month, 1);

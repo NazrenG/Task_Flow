@@ -1,0 +1,35 @@
+namespace Task_Flow.WebAPI.Services.Results
+{
+    public enum ServiceResultStatus
+    {
+        Success,
+        BadRequest,
+        NotFound,
+        Failure
+    }
+
+    /// <summary>
+    /// Service əməliyyatının nəticəsi. Controller bu nəticəni HTTP cavabına çevirir,
+    /// beləliklə service HTTP-dən asılı olmur, controller isə biznes qərarı vermir.
+    /// </summary>
+    public class ServiceResult<T>
+    {
+        public ServiceResultStatus Status { get; }
+        public T? Value { get; }
+        public object? Error { get; }
+
+        public bool IsSuccess => Status == ServiceResultStatus.Success;
+
+        private ServiceResult(ServiceResultStatus status, T? value, object? error)
+        {
+            Status = status;
+            Value = value;
+            Error = error;
+        }
+
+        public static ServiceResult<T> Success(T value) => new(ServiceResultStatus.Success, value, null);
+        public static ServiceResult<T> BadRequest(object error) => new(ServiceResultStatus.BadRequest, default, error);
+        public static ServiceResult<T> NotFound(object? error = null) => new(ServiceResultStatus.NotFound, default, error);
+        public static ServiceResult<T> Failure(object error) => new(ServiceResultStatus.Failure, default, error);
+    }
+}
