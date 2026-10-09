@@ -23,6 +23,7 @@ using Task_Flow.WebAPI.Services.Messages;
 using Task_Flow.WebAPI.Services.NotificationCenter;
 using Task_Flow.WebAPI.Services.NotificationCenter.RequestAcceptance;
 using Task_Flow.WebAPI.Services.Notifications;
+using Task_Flow.WebAPI.Services.Predictions;
 using Task_Flow.WebAPI.Services.Profiles;
 using Task_Flow.WebAPI.Services.ProjectActivities;
 using Task_Flow.WebAPI.Services.Quizzes;
@@ -178,6 +179,7 @@ builder.Services.AddScoped<ISprintCommandService, SprintCommandService>();
 builder.Services.AddScoped<ICommentQueryService, CommentQueryService>();
 builder.Services.AddScoped<ICommentCommandService, CommentCommandService>();
 builder.Services.AddScoped<IGitHubAccountService, GitHubAccountService>();
+builder.Services.AddHttpClient<IWordCompletionService, GeminiWordCompletionService>();
 
 
 // Identity configuration (only user management, no roles)

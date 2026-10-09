@@ -25,7 +25,7 @@ namespace Task_Flow.WebAPI.Controllers.Extensions
                     return controller.Unauthorized(result.Error);
 
                 default:
-                    return controller.StatusCode(StatusCodes.Status500InternalServerError, result.Error);
+                    return controller.StatusCode(result.FailureStatusCode, result.Error);
             }
         }
     }
