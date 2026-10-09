@@ -16,6 +16,7 @@ using Task_Flow.WebAPI.Services.NotificationCenter;
 using Task_Flow.WebAPI.Services.NotificationCenter.RequestAcceptance;
 using Task_Flow.WebAPI.Services.Notifications;
 using Task_Flow.WebAPI.Services.Profiles;
+using Task_Flow.WebAPI.Services.TeamMembers;
 using Task_Flow.WebAPI.Services.UserTasks;
 using Task_Flow.WebAPI.Services.Projects;
 using Task_Flow.WebAPI.Services.Works;
@@ -134,6 +135,9 @@ builder.Services.AddScoped<IPasswordAppService, PasswordAppService>();
 builder.Services.AddScoped<IUserTaskRealtimeNotifier, UserTaskRealtimeNotifier>();
 builder.Services.AddScoped<IUserTaskQueryService, UserTaskQueryService>();
 builder.Services.AddScoped<IUserTaskCommandService, UserTaskCommandService>();
+builder.Services.AddScoped<ITeamMemberQueryService, TeamMemberQueryService>();
+builder.Services.AddScoped<ITeamMemberCommandService, TeamMemberCommandService>();
+builder.Services.AddScoped<ITeamInvitationService, TeamInvitationService>();
 
 
 // Identity configuration (only user management, no roles)
