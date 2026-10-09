@@ -13,6 +13,7 @@ using Task_Flow.Entities.Models;
 using Task_Flow.WebAPI.Hubs;
 using Task_Flow.WebAPI.Services.Auth;
 using Task_Flow.WebAPI.Services.Chats;
+using Task_Flow.WebAPI.Services.Comments;
 using Task_Flow.WebAPI.Services.Companies;
 using Task_Flow.WebAPI.Services.Friends;
 using Task_Flow.WebAPI.Services.GroupChats;
@@ -173,6 +174,8 @@ builder.Services.AddScoped<IProjectActivityAppService, ProjectActivityAppService
 builder.Services.AddScoped<ISprintRealtimeNotifier, SprintRealtimeNotifier>();
 builder.Services.AddScoped<ISprintQueryService, SprintQueryService>();
 builder.Services.AddScoped<ISprintCommandService, SprintCommandService>();
+builder.Services.AddScoped<ICommentQueryService, CommentQueryService>();
+builder.Services.AddScoped<ICommentCommandService, CommentCommandService>();
 
 
 // Identity configuration (only user management, no roles)
