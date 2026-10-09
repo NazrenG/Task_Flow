@@ -4,6 +4,7 @@ using Task_Flow.DataAccess.Abstract;
 using Task_Flow.Entities.Models;
 using Task_Flow.WebAPI.Dtos;
 using Task_Flow.WebAPI.Services.Mapping;
+using Task_Flow.WebAPI.Services.NotificationCenter;
 using Task_Flow.WebAPI.Services.Notifications;
 using Task_Flow.WebAPI.Services.Results;
 
@@ -11,7 +12,6 @@ namespace Task_Flow.WebAPI.Services.Works
 {
     public class WorkCommandService : IWorkCommandService
     {
-        private const string ProjectRequestType = "ProjectRequest";
         private const string UpdateSuccessMessage = "update succesfuly";
         private const string DeleteSuccessMessage = "delete succesful";
 
@@ -98,7 +98,7 @@ namespace Task_Flow.WebAPI.Services.Works
                     IsAccepted = false,
                     ReceiverId = member.Id,
                     SenderId = userId,
-                    NotificationType = ProjectRequestType,
+                    NotificationType = RequestNotificationTypes.ProjectRequest,
                     ProjectName = project.Title,
                     SentDate = DateTime.UtcNow,
                     Text = editedMessage
@@ -155,7 +155,7 @@ namespace Task_Flow.WebAPI.Services.Works
                 SenderId = userId,
                 Text = $"You have a new task({value.Title}) in the project named {project.Title}",
                 IsAccepted = false,
-                NotificationType = ProjectRequestType,
+                NotificationType = RequestNotificationTypes.ProjectRequest,
                 ProjectName = project.Title
             });
             // notification list project taski ucun
@@ -199,7 +199,7 @@ namespace Task_Flow.WebAPI.Services.Works
                 SenderId = userId,
                 Text = $"The task '{task.Title}' has been deleted by the project manager in the project '{project.Title}'.",
                 IsAccepted = false,
-                NotificationType = ProjectRequestType,
+                NotificationType = RequestNotificationTypes.ProjectRequest,
                 ProjectName = project.Title
             });
             // notification list project taski ucun
