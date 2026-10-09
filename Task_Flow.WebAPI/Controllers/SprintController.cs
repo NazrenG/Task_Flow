@@ -1,14 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-using Newtonsoft.Json.Linq;
 using System.Security.Claims;
-using Task_Flow.Business.Abstract;
-using Task_Flow.Business.Cocrete;
 using Task_Flow.Business.DTOs;
 using Task_Flow.Entities.Models;
-using Task_Flow.WebAPI.Hubs;
+using Task_Flow.WebAPI.Controllers.Extensions;
+using Task_Flow.WebAPI.Services.Sprints;
 
 namespace Task_Flow.WebAPI.Controllers
 {
@@ -16,101 +12,56 @@ namespace Task_Flow.WebAPI.Controllers
     [ApiController]
     public class SprintController : ControllerBase
     {
-        private readonly ISprintService spritService;
-        private readonly ICanbanColumnService canbanColumnService;
-        private readonly IHubContext<ConnectionHub> _context;
+        private readonly ISprintQueryService _sprintQueryService;
+        private readonly ISprintCommandService _sprintCommandService;
 
-        public SprintController(ISprintService spritService, IHubContext<ConnectionHub> context, ICanbanColumnService canbanColumnService)
+        public SprintController(ISprintQueryService sprintQueryService, ISprintCommandService sprintCommandService)
         {
-            this.spritService = spritService;
-            _context = context;
-            this.canbanColumnService = canbanColumnService;
+            _sprintQueryService = sprintQueryService;
+            _sprintCommandService = sprintCommandService;
         }
+
+        private string? CurrentUserId => HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         [HttpGet("ProjectSprints/{projectId}")]
         public async Task<IActionResult> GetProjectSprints(int projectId)
         {
-            var sprints = await spritService.GetSprints(projectId);
-            return Ok(sprints.Select(s => new { s.Id, s.Name }));
-        }
-        private async Task CreateDefaultKanbanColumns(int sprintId)
-        {
-            var columns = new[]
-            {
-        new { Name = "To Do", StatusKey = "to do" },
-        new { Name = "Progress", StatusKey = "progress" },
-        new { Name = "Done", StatusKey = "done" }
-    };
-
-            int order = 1;
-            foreach (var col in columns)
-            {
-                await canbanColumnService.CreateDefaultCanbanName(
-                    new CreateDefaultCanbanNameDto
-                    {
-                        SprintId = sprintId,
-                        Name = col.Name,
-                        Order = order++,
-                        StatusKey = col.StatusKey
-                    });
-            }
+            return this.ToActionResult(await _sprintQueryService.GetSprintSummariesAsync(projectId));
         }
 
         [Authorize]
         [HttpPost("NewSprint/{projectId}")]
         public async Task<IActionResult> CreateSprit(int projectId, [FromBody] SprintDto splitDto)
         {
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-          var sprint=  await spritService.Create(projectId, splitDto);
-            //backlog
-            await _context.Clients.User(userId).SendAsync("UpdateSprints");
-
-            //default cNBn nAME
-            await CreateDefaultKanbanColumns(sprint.Id);
-            return Ok();
-
+            return this.ToActionResult(await _sprintCommandService.CreateAsync(projectId, CurrentUserId, splitDto));
         }
 
         [Authorize]
         [HttpDelete("DeleteSprint/{spritId}")]
         public async Task<IActionResult> DeleteSprit(int spritId)
         {
-            await spritService.DeleteSplit(spritId);
-            return Ok();
+            return this.ToActionResult(await _sprintCommandService.DeleteAsync(spritId));
         }
 
         [Authorize]
         [HttpPut("UpdatedSprint/{workId}/{spritId}")]
         public async Task<IActionResult> UpdatedSprit(int workId, int spritId)
         {
-            await spritService.AddBacklogToSplit(workId, spritId);
-            return Ok();
+            return this.ToActionResult(await _sprintCommandService.MoveBacklogTaskToSprintAsync(workId, spritId));
         }
+
         [Authorize]
         [HttpGet("AllSprints/{projectId}")]
         public async Task<List<Sprint>> GetSprints(int projectId)
         {
-
-            var list = await spritService.GetSprints(projectId);
-
-        
-
-            return list;
-
+            return await _sprintQueryService.GetSprintsAsync(projectId);
         }
 
         [Authorize]
         [HttpPut("UpdateTaskSprint")]
-
         public async Task<IActionResult> UpdateSprint(UpdateSprintDto updateSprintDto)
         {
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            await spritService.UpdateTaskSplit(updateSprintDto);
-           await _context.Clients.User(userId).SendAsync("AddProjectToSprint");
-            return Ok();
+            return this.ToActionResult(await _sprintCommandService.UpdateTaskSprintAsync(CurrentUserId, updateSprintDto));
         }
-
     }
 }

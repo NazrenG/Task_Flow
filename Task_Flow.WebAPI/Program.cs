@@ -24,6 +24,7 @@ using Task_Flow.WebAPI.Services.Notifications;
 using Task_Flow.WebAPI.Services.Profiles;
 using Task_Flow.WebAPI.Services.ProjectActivities;
 using Task_Flow.WebAPI.Services.Quizzes;
+using Task_Flow.WebAPI.Services.Sprints;
 using Task_Flow.WebAPI.Services.TaskCustomizations;
 using Task_Flow.WebAPI.Services.TeamMembers;
 using Task_Flow.WebAPI.Services.UserTasks;
@@ -169,6 +170,9 @@ builder.Services.AddScoped<IMessageAppService, MessageAppService>();
 builder.Services.AddScoped<ITaskCustomizeQueryService, TaskCustomizeQueryService>();
 builder.Services.AddScoped<ITaskCustomizeCommandService, TaskCustomizeCommandService>();
 builder.Services.AddScoped<IProjectActivityAppService, ProjectActivityAppService>();
+builder.Services.AddScoped<ISprintRealtimeNotifier, SprintRealtimeNotifier>();
+builder.Services.AddScoped<ISprintQueryService, SprintQueryService>();
+builder.Services.AddScoped<ISprintCommandService, SprintCommandService>();
 
 
 // Identity configuration (only user management, no roles)
