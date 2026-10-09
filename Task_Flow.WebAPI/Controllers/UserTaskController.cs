@@ -1,14 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
-using Task_Flow.Business.Abstract;
-using Task_Flow.DataAccess.Abstract;
-using Task_Flow.Entities.Models;
+using Task_Flow.WebAPI.Controllers.Extensions;
 using Task_Flow.WebAPI.Dtos;
-using Task_Flow.WebAPI.Hubs;
+using Task_Flow.WebAPI.Services.UserTasks;
+using Task_Flow.WebAPI.Services.Works;
 
 namespace Task_Flow.WebAPI.Controllers
 {
@@ -16,356 +12,154 @@ namespace Task_Flow.WebAPI.Controllers
     [ApiController]
     public class UserTaskController : ControllerBase
     {
-        private readonly IUserTaskService userTaskService;
-        private readonly IUserService userService;
-        private readonly UserManager<CustomUser> _userManager;
-        private readonly IHubContext<ConnectionHub> _context;
-        private readonly IProjectService _projectService;
+        private readonly IUserTaskQueryService _userTaskQueryService;
+        private readonly IUserTaskCommandService _userTaskCommandService;
 
-        public UserTaskController(IUserTaskService userTaskService, IUserService userService, UserManager<CustomUser> userManager, IHubContext<ConnectionHub> context, IProjectService projectService)
+        public UserTaskController(IUserTaskQueryService userTaskQueryService, IUserTaskCommandService userTaskCommandService)
         {
-            this.userTaskService = userTaskService;
-            this.userService = userService;
-            _userManager = userManager;
-            _context = context;
-            _projectService = projectService;
+            _userTaskQueryService = userTaskQueryService;
+            _userTaskCommandService = userTaskCommandService;
         }
 
+        private string? CurrentUserId => HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        // GET: api/<WorkController>
+        private IActionResult UserNotAuthenticated() => BadRequest(new { message = "User not authenticated." });
+
         [Authorize]
         [HttpGet("UserTasks")]
         public async Task<IActionResult> GetUserTasks()
         {
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return BadRequest(new { message = "User not authenticated." });
-            }
+            var userId = CurrentUserId;
+            if (userId == null) return UserNotAuthenticated();
 
-            var list = await userTaskService.GetUserTasks(userId);
-            var items = list.Select(p =>
-            {
-                return new WorkDto
-                {
-                    Id = p.Id,
-                    CreatedById = userId,
-                    Description = p.Description,
-                    Deadline = p.Deadline,
-                    Priority = p.Priority,
-                    Status = p.Status,
-                    Title = p.Title,
-                    StartDate = p.StartTime,
-                    Color = p.Color,
-                };
-            }).ToList();
-            return Ok(items);
+            return this.ToActionResult(await _userTaskQueryService.GetUserTasksAsync(userId));
         }
+
         [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUserTask(int id)
         {
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return BadRequest(new { message = "User not authenticated." });
-            }
-            var item = await userTaskService.GetById(id);
+            var userId = CurrentUserId;
+            if (userId == null) return UserNotAuthenticated();
 
-            var work = new WorkDto
-            {
-                CreatedById = userId,
-                Description = item.Description,
-                Deadline = item.Deadline,
-                Priority = item.Priority,
-                Status = item.Status,
-                Title = item.Title,
-                StartDate = item.StartTime,
-                Color = item.Color,
-            };
-            return Ok(work);
+            return this.ToActionResult(await _userTaskQueryService.GetUserTaskAsync(id, userId));
         }
+
         [Authorize]
         [HttpPut("EditedTaskForCalendar/{id}")]
         public async Task<IActionResult> PutEditTaskForCalendar(int id, [FromBody] EditForCalendarDto value)
         {
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return BadRequest(new { message = "User not authenticated." });
-            }
-            var item = await userTaskService.GetById(id);
- 
-            item.Deadline = value.Deadline; 
-            item.StartTime = value.StartDate; 
+            var userId = CurrentUserId;
+            if (userId == null) return UserNotAuthenticated();
 
-            await userTaskService.Update(item); 
-            await _context.Clients.User(userId).SendAsync("UserTaskList"); 
-
-
-
-            return Ok(new { message = "update succesfuly" });
+            return this.ToActionResult(await _userTaskCommandService.EditTaskForCalendarAsync(id, userId, value));
         }
-
 
         [Authorize]
         [HttpPut("EditedTask/{id}")]
         public async Task<IActionResult> PutEditTask(int id, [FromBody] WorkDto value)
         {
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return BadRequest(new { message = "User not authenticated." });
-            }
-            var item = await userTaskService.GetById(id); 
+            var userId = CurrentUserId;
+            if (userId == null) return UserNotAuthenticated();
 
-            item.Description = value.Description;
-            item.Deadline = value.Deadline;
-            item.Priority = value.Priority;
-            item.Status = value.Status;
-            item.Title = value.Title;
-            item.StartTime = value.StartDate;
-            item.Color = value.Color;
-
-            await userTaskService.Update(item);
-            //TaskTotalCount OnHoldTaskCount RunningTaskCount CompletedTaskCount
-         
-            await _context.Clients.User(userId).SendAsync("UserTaskList");
-            await _context.Clients.User(userId).SendAsync("OnHoldTaskCount");
-            await _context.Clients.User(userId).SendAsync("RunningTaskCount");
-            await _context.Clients.User(userId).SendAsync("CompletedTaskCount");
-
-            //canban ucun signalr
-            await _context.Clients.User(userId).SendAsync("CanbanTaskUpdated"); 
-
-            //project ve view detail sehifesindeki task list
-            await _context.Clients.User(item.CreatedById).SendAsync("ProjectsTaskList");
-            await _context.Clients.User(item.CreatedById).SendAsync("ProjectDetailTaskList");
-
-            //view profil sehifesindeki task list 
-            await _context.Clients.User(item.CreatedById).SendAsync("UserProfileTask");
-
-            //dashboard-da current project
-            await _context.Clients.User(item.CreatedById).SendAsync("DashboardReceiveProject");
-            //project activity log signalr detail sehifesi
-            await _context.Clients.User(item.CreatedById).SendAsync("ProjectRecentActivityInDetail");
-            await _context.Clients.User(userId).SendAsync("ProjectRecentActivityInDetail");
-            //project activity log signalr project sehifesi
-            await _context.Clients.User(item.CreatedById).SendAsync("ProjectsRecentActivity");
-            await _context.Clients.User(userId).SendAsync("ProjectsRecentActivity");
-            return Ok(new { message = "update succesfuly" });
+            return this.ToActionResult(await _userTaskCommandService.EditTaskAsync(id, userId, value));
         }
-
 
         [Authorize]
         [HttpGet("UserTasksCount")]
         public async Task<IActionResult> GetUserTaskCount()
         {
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return BadRequest(new { message = "User not authenticated." });
-            }
+            var userId = CurrentUserId;
+            if (userId == null) return UserNotAuthenticated();
 
-            var item = await userTaskService.GetUserTasks(userId);
-
-            return Ok(item.Count());
+            return this.ToActionResult(await _userTaskQueryService.GetUserTaskCountAsync(userId));
         }
-        
 
         [Authorize]
         [HttpPost("NewTask")]
         public async Task<IActionResult> Post([FromBody] WorkDto value)
         {
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return BadRequest(new { message = "User not authenticated." });
-            }
-            var checkTitle = await userTaskService.CheckTaskName(value.Title);
-            if (checkTitle)
-            {
-                return BadRequest(new { message = "this title already has." });
-            }
+            var userId = CurrentUserId;
+            if (userId == null) return UserNotAuthenticated();
 
-            var item = new UserTask
-            {
-                CreatedById = userId,
-                Description = value.Description,
-                Deadline = value.Deadline,
-                Priority = value.Priority,
-                Status = "to do",
-                Title = value.Title,
-                Color = value.Color,
-                StartTime = value.StartDate
-            };
-            await userTaskService.Add(item);
-            //TaskTotalCount OnHoldTaskCount RunningTaskCount CompletedTaskCount
-            await _context.Clients.User(userId).SendAsync("TaskTotalCount");
-
-            await _context.Clients.User(userId).SendAsync("OnHoldTaskCount");
-            await _context.Clients.User(userId).SendAsync("UserTaskList");
-
-
-            return Ok(item);
+            return this.ToActionResult(await _userTaskCommandService.CreateTaskAsync(userId, value));
         }
+
         [Authorize]
         [HttpDelete("DeleteUserTask/{taskId}")]
         public async Task<IActionResult> Delete(int taskId)
         {
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return BadRequest(new { message = "User not authenticated." });
-            }
-            var item = await userTaskService.GetById(taskId);
-            if (item == null)
-            {
-                return NotFound();
-            }
-            await userTaskService.Delete(item);
-            //TaskTotalCount OnHoldTaskCount RunningTaskCount CompletedTaskCount
-         
-            if (item.Status=="to do") await _context.Clients.User(userId).SendAsync("OnHoldTaskCount");
-           else if (item.Status=="in progress") await _context.Clients.User(userId).SendAsync("RunningTaskCount");
-          else  if (item.Status=="done") await _context.Clients.User(userId).SendAsync("CompletedTaskCount");
-            await _context.Clients.User(userId).SendAsync("TaskTotalCount");
-            return Ok(new { message = "delete succesful" });
+            var userId = CurrentUserId;
+            if (userId == null) return UserNotAuthenticated();
+
+            return this.ToActionResult(await _userTaskCommandService.DeleteTaskAsync(taskId, userId));
         }
+
         [Authorize]
         [HttpGet("DailyTask")]
         public async Task<IActionResult> GetDailyTask()
         {
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = CurrentUserId;
+            if (userId == null) return UserNotAuthenticated();
 
-            if (userId == null)
-            {
-                return BadRequest(new { message = "User not authenticated." });
-            }
-            var tasks = await userTaskService.GetUserTasks(userId);
-            var todayTasks = tasks.Where(d => d.Deadline.Date == DateTime.Now.Date).OrderBy(t => t.StartTime).ToList();
-            return Ok(todayTasks);
-
+            return this.ToActionResult(await _userTaskQueryService.GetDailyTasksAsync(userId));
         }
 
         [Authorize]
         [HttpGet("ToDoTask")]
-        public async Task<IActionResult> GetToDoTask()
-        {
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return BadRequest(new { message = "User not authenticated." });
-            }
-            var tasks = await userTaskService.GetToDoTask(userId);
-            return Ok(tasks);
+        public Task<IActionResult> GetToDoTask() => GetTasksByStatus(WorkStatusFilter.ToDo);
 
-        }
         [Authorize]
         [HttpGet("ToDoTaskCount")]
-        public async Task<IActionResult> GetToDoTaskCount()
-        {
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return BadRequest(new { message = "User not authenticated." });
-            }
-            var tasks = await userTaskService.GetToDoTask(userId);
-            return Ok(tasks.Count);
-
-        }
+        public Task<IActionResult> GetToDoTaskCount() => GetTaskCountByStatus(WorkStatusFilter.ToDo);
 
         [HttpGet("ToDoTaskCountForMail/{email}")]
-        public async Task<IActionResult> GetToDoTaskCountForMail(string email)
-        {
-            var user = await _userManager.FindByEmailAsync(email);
-            if (user == null)
-            {
-                return BadRequest(new { message = "User not found." });
-            }
-            var tasks = await userTaskService.GetToDoTask(user.Id);
-            return Ok(tasks.Count);
-
-        }
-
+        public Task<IActionResult> GetToDoTaskCountForMail(string email) =>
+            GetTaskCountByStatusForEmail(email, WorkStatusFilter.ToDo);
 
         [Authorize]
         [HttpGet("InProgressTask")]
-        public async Task<IActionResult> GetInProgressTask()
-        {
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return BadRequest(new { message = "User not authenticated." });
-            }
-            var tasks = await userTaskService.GetInProgressTask(userId);
-            return Ok(tasks);
+        public Task<IActionResult> GetInProgressTask() => GetTasksByStatus(WorkStatusFilter.InProgress);
 
-        }
         [Authorize]
         [HttpGet("InProgressTaskCount")]
-        public async Task<IActionResult> GetInProgressTaskCountForEmail()
-        {
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return BadRequest(new { message = "User not authenticated." });
-            }
-            var tasks = await userTaskService.GetInProgressTask(userId);
-            return Ok(tasks.Count);
+        public Task<IActionResult> GetInProgressTaskCount() => GetTaskCountByStatus(WorkStatusFilter.InProgress);
 
-        }
         [HttpGet("InProgressTaskCountForEmail/{email}")]
-        public async Task<IActionResult> GetInProgressTaskCount(string email)
-        {
-            var user = await _userManager.FindByEmailAsync(email);
-            if (user == null)
-            {
-                return BadRequest(new { message = "User not found." });
-            }
-            var tasks = await userTaskService.GetInProgressTask(user.Id);
-            return Ok(tasks.Count);
-
-        }
+        public Task<IActionResult> GetInProgressTaskCountForEmail(string email) =>
+            GetTaskCountByStatusForEmail(email, WorkStatusFilter.InProgress);
 
         [Authorize]
         [HttpGet("DoneTask")]
-        public async Task<IActionResult> GetDoneTask()
-        {
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return BadRequest(new { message = "User not authenticated." });
-            }
-            var tasks = await userTaskService.GetDoneTask(userId);
-            return Ok(tasks);
+        public Task<IActionResult> GetDoneTask() => GetTasksByStatus(WorkStatusFilter.Done);
 
-        }
         [Authorize]
         [HttpGet("DoneTaskCount")]
-        public async Task<IActionResult> GetDoneTaskCount()
-        {
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return BadRequest(new { message = "User not authenticated." });
-            }
-            var tasks = await userTaskService.GetDoneTask(userId);
-            return Ok(tasks.Count);
+        public Task<IActionResult> GetDoneTaskCount() => GetTaskCountByStatus(WorkStatusFilter.Done);
 
-        }
         [HttpGet("DoneTaskCountForEmail/{email}")]
-        public async Task<IActionResult> GetDoneTaskCountForEmail(string email)
+        public Task<IActionResult> GetDoneTaskCountForEmail(string email) =>
+            GetTaskCountByStatusForEmail(email, WorkStatusFilter.Done);
+
+        private async Task<IActionResult> GetTasksByStatus(WorkStatusFilter status)
         {
-            var user = await _userManager.FindByEmailAsync(email);
-            if (user == null)
-            {
-                return BadRequest(new { message = "User not found." });
-            }
+            var userId = CurrentUserId;
+            if (userId == null) return UserNotAuthenticated();
 
-            var tasks = await userTaskService.GetDoneTask(user.Id);
-            return Ok(tasks.Count);
+            return this.ToActionResult(await _userTaskQueryService.GetTasksByStatusAsync(userId, status));
+        }
 
+        private async Task<IActionResult> GetTaskCountByStatus(WorkStatusFilter status)
+        {
+            var userId = CurrentUserId;
+            if (userId == null) return UserNotAuthenticated();
+
+            return this.ToActionResult(await _userTaskQueryService.GetTaskCountByStatusAsync(userId, status));
+        }
+
+        private async Task<IActionResult> GetTaskCountByStatusForEmail(string email, WorkStatusFilter status)
+        {
+            return this.ToActionResult(await _userTaskQueryService.GetTaskCountByStatusForEmailAsync(email, status));
         }
     }
 }
