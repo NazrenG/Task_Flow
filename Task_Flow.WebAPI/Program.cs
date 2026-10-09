@@ -11,6 +11,7 @@ using Task_Flow.DataAccess.Concrete;
 using Task_Flow.Entities.Data;
 using Task_Flow.Entities.Models;
 using Task_Flow.WebAPI.Hubs;
+using Task_Flow.WebAPI.Services.Auth;
 using Task_Flow.WebAPI.Services;
 using Task_Flow.WebAPI.Services.NotificationCenter;
 using Task_Flow.WebAPI.Services.NotificationCenter.RequestAcceptance;
@@ -138,6 +139,9 @@ builder.Services.AddScoped<IUserTaskCommandService, UserTaskCommandService>();
 builder.Services.AddScoped<ITeamMemberQueryService, TeamMemberQueryService>();
 builder.Services.AddScoped<ITeamMemberCommandService, TeamMemberCommandService>();
 builder.Services.AddScoped<ITeamInvitationService, TeamInvitationService>();
+builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<IAuthAppService, AuthAppService>();
+builder.Services.AddScoped<IUserLookupService, UserLookupService>();
 
 
 // Identity configuration (only user management, no roles)

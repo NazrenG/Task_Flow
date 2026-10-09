@@ -1,10 +1,11 @@
-namespace Task_Flow.WebAPI.Services.Results
+﻿namespace Task_Flow.WebAPI.Services.Results
 {
     public enum ServiceResultStatus
     {
         Success,
         BadRequest,
         NotFound,
+        Unauthorized,
         Failure
     }
 
@@ -30,6 +31,7 @@ namespace Task_Flow.WebAPI.Services.Results
         public static ServiceResult<T> Success(T value) => new(ServiceResultStatus.Success, value, null);
         public static ServiceResult<T> BadRequest(object error) => new(ServiceResultStatus.BadRequest, default, error);
         public static ServiceResult<T> NotFound(object? error = null) => new(ServiceResultStatus.NotFound, default, error);
+        public static ServiceResult<T> Unauthorized(object? error = null) => new(ServiceResultStatus.Unauthorized, default, error);
         public static ServiceResult<T> Failure(object error) => new(ServiceResultStatus.Failure, default, error);
     }
 }
