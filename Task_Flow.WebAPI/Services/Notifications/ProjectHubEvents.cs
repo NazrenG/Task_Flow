@@ -1,4 +1,4 @@
-namespace Task_Flow.WebAPI.Services.Notifications
+﻿namespace Task_Flow.WebAPI.Services.Notifications
 {
     /// <summary>
     /// Layihələrlə bağlı frontend-ə göndərilən SignalR event adları.
@@ -15,5 +15,6 @@ namespace Task_Flow.WebAPI.Services.Notifications
         public const string UpdateCompletedProjects = "UpdateCompletedProjects";
 
         public const string RequestList = "RequestList";
+        public const string RecieveRecentActivityUpdate = "RecieveRecentActivityUpdate";
     }
 }

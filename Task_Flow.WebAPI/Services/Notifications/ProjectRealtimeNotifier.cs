@@ -47,6 +47,11 @@ namespace Task_Flow.WebAPI.Services.Notifications
             return SendAsync(userId, ProjectHubEvents.ReceiveProjectUpdate);
         }
 
+        public Task NotifyProjectActivityAddedAsync(string projectOwnerId)
+        {
+            return SendAsync(projectOwnerId, ProjectHubEvents.RecieveRecentActivityUpdate);
+        }
+
         private static string? GetStatusEvent(string? status)
         {
             return status switch

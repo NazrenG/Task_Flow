@@ -9,5 +9,6 @@
         Task NotifyProjectUpdatedAsync(string userId);
         Task NotifyProjectDeletedAsync(string userId);
         Task NotifyProjectMembersChangedAsync(string userId);
+        Task NotifyProjectActivityAddedAsync(string projectOwnerId);
     }
 }
