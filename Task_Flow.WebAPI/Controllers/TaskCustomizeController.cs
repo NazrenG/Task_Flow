@@ -1,10 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using Task_Flow.Business.Abstract;
-using Task_Flow.DataAccess.Abstract;
-using Task_Flow.Entities.Models;
+﻿using Microsoft.AspNetCore.Mvc;
+using Task_Flow.WebAPI.Controllers.Extensions;
 using Task_Flow.WebAPI.Dtos;
+using Task_Flow.WebAPI.Services.TaskCustomizations;
 
 namespace Task_Flow.WebAPI.Controllers
 {
@@ -12,118 +9,66 @@ namespace Task_Flow.WebAPI.Controllers
     [ApiController]
     public class TaskCustomizeController : ControllerBase
     {
-        private readonly ITaskCustomizeService _taskCustomizeService;
+        private readonly ITaskCustomizeQueryService _queryService;
+        private readonly ITaskCustomizeCommandService _commandService;
 
-        public TaskCustomizeController(ITaskCustomizeService taskCustomizeService)
+        public TaskCustomizeController(ITaskCustomizeQueryService queryService, ITaskCustomizeCommandService commandService)
         {
-            _taskCustomizeService = taskCustomizeService;
+            _queryService = queryService;
+            _commandService = commandService;
         }
 
         // GET: api/<TaskCustomizeController>
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            var items = await _taskCustomizeService.GetCustomize();
-            if (items == null)
-            {
-                return NotFound();
-            }
-            var list = items.Select(l =>
-            {
-                return new TaskCustomizeDto
-                {
-                    TagColor = l.TagColor,
-                    BackColor = l.BackColor,
-                    TaskId = l.TaskId
-                };
-            });
-            return Ok(list);
-
+            return this.ToActionResult(await _queryService.GetAllAsync());
         }
+
         [HttpGet("BackColors")]
         public async Task<IActionResult> GetBackColors()
         {
-            var list = await _taskCustomizeService.GetCustomize();
-            if (list == null) return NotFound();
-
-            var backGroundColorList = list.Select(c => c.BackColor).Distinct().ToList();
-
-            return Ok(backGroundColorList);
+            return this.ToActionResult(await _queryService.GetBackColorsAsync());
         }
 
         [HttpGet("TagColors")]
         public async Task<IActionResult> GetTagColors()
         {
-            var list = await _taskCustomizeService.GetCustomize();
-            if (list == null) return NotFound();
-
-            var tagColorList = list.Select(c => c.TagColor).Distinct().ToList();
-
-            return Ok(tagColorList);
+            return this.ToActionResult(await _queryService.GetTagColorsAsync());
         }
 
         // GET api/<TaskCustomizeController>/5
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
-            var item = await _taskCustomizeService.GetCustomizeById(id);
-            if (item == null)
-            {
-                return NotFound();
-            }
-            var project = new TaskCustomizeDto
-            {
-                TagColor = item.TagColor,
-                BackColor = item.BackColor,
-                TaskId = item.TaskId
-            };
-            return Ok(project);
-
+            return this.ToActionResult(await _queryService.GetByIdAsync(id));
         }
 
         // POST api/<TaskCustomizeController>
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] TaskCustomizeDto value)
         {
-            var item = new TaskCustomize
-            {
-                TagColor = value.TagColor,
-                BackColor = value.BackColor,
-                TaskId = value.TaskId,
-            };
-            await _taskCustomizeService.Add(item);
-            return Ok(item);
+            return this.ToActionResult(await _commandService.AddAsync(value));
         }
 
         // PUT api/<TaskCustomizeController>/5
         [HttpPut("BackgroundColor/{id}")]
         public async Task<IActionResult> PutBackColor(int id, [FromBody] string value)
         {
-            var item = await _taskCustomizeService.GetCustomizeById(id);
-            if (item == null) { return NotFound(); }
-            item.BackColor = value;
-            await _taskCustomizeService.Update(item);
-            return Ok();
-
+            return this.ToActionResult(await _commandService.ChangeBackColorAsync(id, value));
         }
+
         [HttpPut("TagColor/{id}")]
         public async Task<IActionResult> PutTagColor(int id, [FromBody] string value)
         {
-            var item = await _taskCustomizeService.GetCustomizeById(id);
-            if (item == null) { return NotFound(); }
-            item.TagColor = value;
-            await _taskCustomizeService.Update(item);
-            return Ok();
-
+            return this.ToActionResult(await _commandService.ChangeTagColorAsync(id, value));
         }
+
         // DELETE api/<TaskCustomizeController>/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var item = await _taskCustomizeService.GetCustomizeById(id);
-            if (item == null) { return NotFound(); };
-            await _taskCustomizeService.Delete(item);
-            return Ok();
+            return this.ToActionResult(await _commandService.DeleteAsync(id));
         }
     }
 }

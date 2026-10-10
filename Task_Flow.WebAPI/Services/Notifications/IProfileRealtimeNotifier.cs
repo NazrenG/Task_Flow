@@ -1,4 +1,4 @@
-namespace Task_Flow.WebAPI.Services.Notifications
+﻿namespace Task_Flow.WebAPI.Services.Notifications
 {
     /// <summary>
     /// Profil əməliyyatlarından sonra istifadəçilərin ekranlarını SignalR ilə yeniləyir.
@@ -7,5 +7,6 @@ namespace Task_Flow.WebAPI.Services.Notifications
     {
         Task NotifyProfileUpdatedAsync(string userId);
         Task NotifyUserActivityChangedForAllAsync();
+        Task NotifyUserConnectedAsync(string username);
     }
 }

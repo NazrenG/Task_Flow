@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.SignalR;
 using Task_Flow.WebAPI.Hubs;
 
 namespace Task_Flow.WebAPI.Services.Notifications
@@ -21,6 +21,12 @@ namespace Task_Flow.WebAPI.Services.Notifications
         public Task NotifyUserActivityChangedForAllAsync()
         {
             return _hubContext.Clients.All.SendAsync(ProfileHubEvents.UpdateUserActivity);
+        }
+
+        // Sistemə daxil olan istifadəçi haqqında hamıya məlumat göndərilir
+        public Task NotifyUserConnectedAsync(string username)
+        {
+            return _hubContext.Clients.All.SendAsync(ProfileHubEvents.ReceiveConnectInfo, $"{username} has connected");
         }
     }
 }

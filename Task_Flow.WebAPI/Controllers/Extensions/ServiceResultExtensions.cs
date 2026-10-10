@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Task_Flow.WebAPI.Services.Results;
 
 namespace Task_Flow.WebAPI.Controllers.Extensions
@@ -20,8 +20,12 @@ namespace Task_Flow.WebAPI.Controllers.Extensions
                     if (result.Error == null) return controller.NotFound();
                     return controller.NotFound(result.Error);
 
+                case ServiceResultStatus.Unauthorized:
+                    if (result.Error == null) return controller.Unauthorized();
+                    return controller.Unauthorized(result.Error);
+
                 default:
-                    return controller.StatusCode(StatusCodes.Status500InternalServerError, result.Error);
+                    return controller.StatusCode(result.FailureStatusCode, result.Error);
             }
         }
     }

@@ -1,4 +1,4 @@
-using Task_Flow.Entities.Models;
+﻿using Task_Flow.Entities.Models;
 using Task_Flow.WebAPI.Dtos;
 
 namespace Task_Flow.WebAPI.Services.Mapping
@@ -55,6 +55,25 @@ namespace Task_Flow.WebAPI.Services.Mapping
                 Occupation = user.Occupation,
                 RegisterDate = user.RegisterDate,
                 IsOnline = user.IsOnline
+            };
+        }
+
+        public static object ToCurrentUserData(this CustomUser user)
+        {
+            return new
+            {
+                Username = user.UserName,
+                Firstname = user.Firstname,
+                Fullname = user.Firstname + " " + user.Lastname,
+                Lastname = user.Lastname,
+                Phone = user.PhoneNumber,
+                Gender = user.Gender,
+                Country = user.Country,
+                Birthday = user.Birthday,
+                Email = user.Email,
+                Image = user.Image,
+                PlanType = user.PlanType,
+                Occupation = user.Occupation
             };
         }
 

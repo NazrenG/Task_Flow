@@ -1,4 +1,4 @@
-namespace Task_Flow.WebAPI.Services.Notifications
+﻿namespace Task_Flow.WebAPI.Services.Notifications
 {
     /// <summary>
     /// Profil ilə bağlı SignalR event adları.
@@ -7,5 +7,6 @@ namespace Task_Flow.WebAPI.Services.Notifications
     {
         public const string ProfileUpdated = "ProfileUpdated";
         public const string UpdateUserActivity = "UpdateUserActivity";
+        public const string ReceiveConnectInfo = "ReceiveConnectInfo";
     }
 }

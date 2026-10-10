@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Task_Flow.Business.Abstract;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
 namespace Task_Flow.WebAPI.Controllers
 {
     [Authorize]
@@ -19,25 +17,26 @@ namespace Task_Flow.WebAPI.Controllers
             _premiumUserService = premiumUserService;
         }
 
+        private string? CurrentUserId => HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
         [HttpPatch("UpgradeUserToPremiumPlan")]
         public async Task<IActionResult> UpgradeUserToPremiumPlan()
         {
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            await _premiumUserService.UpgradeUserPlanToPremium(userId);
+            await _premiumUserService.UpgradeUserPlanToPremium(CurrentUserId!);
             return Ok();
         }
+
         [HttpPatch("UpgradeUserToBusinessPlan")]
         public async Task<IActionResult> UpgradeUserToBusinessPlan()
         {
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            await _premiumUserService.UpgradeUserPlanToBusiness(userId);
+            await _premiumUserService.UpgradeUserPlanToBusiness(CurrentUserId!);
             return Ok();
-        } 
+        }
+
         [HttpPatch("SwitchToFreePlan")]
         public async Task<IActionResult> SwitchToFreePlan()
         {
-            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            await _premiumUserService.SwitchToFreePlan(userId);
+            await _premiumUserService.SwitchToFreePlan(CurrentUserId!);
             return Ok();
         }
 

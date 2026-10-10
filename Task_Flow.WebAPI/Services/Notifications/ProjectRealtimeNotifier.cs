@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.SignalR;
 using Task_Flow.WebAPI.Hubs;
 
 namespace Task_Flow.WebAPI.Services.Notifications
@@ -40,6 +40,16 @@ namespace Task_Flow.WebAPI.Services.Notifications
             await SendAsync(userId,
                 ProjectHubEvents.RecieveInProgressUpdate,
                 ProjectHubEvents.RequestList);
+        }
+
+        public Task NotifyProjectMembersChangedAsync(string userId)
+        {
+            return SendAsync(userId, ProjectHubEvents.ReceiveProjectUpdate);
+        }
+
+        public Task NotifyProjectActivityAddedAsync(string projectOwnerId)
+        {
+            return SendAsync(projectOwnerId, ProjectHubEvents.RecieveRecentActivityUpdate);
         }
 
         private static string? GetStatusEvent(string? status)
